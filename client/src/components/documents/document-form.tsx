@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -8,6 +8,7 @@ import { insertDocumentSchema } from "@shared/schema";
 import { Area, DocumentType, Document } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Paperclip, Upload } from "lucide-react";
 
 import {
   Form,
@@ -54,6 +55,8 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
   const [representationType, setRepresentationType] = useState("A Nombre Propio");
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch areas for select
   const { data: areas } = useQuery<Area[]>({
@@ -193,9 +196,50 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
     }
   };
 
+  // Function to handle file selection
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setSelectedFile(files[0]);
+    }
+  };
+
   // Handle form submission
   const onSubmit = (values: DocumentFormValues) => {
-    mutation.mutate(values);
+    // Create FormData for file upload
+    const formData = new FormData();
+    
+    // Append file if selected
+    if (selectedFile) {
+      formData.append("file", selectedFile);
+      
+      // Upload file first
+      fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      })
+        .then(response => response.json())
+        .then(data => {
+          // If file upload successful, add the file path to the document data
+          const valuesWithFile = {
+            ...values,
+            filePath: data.filePath
+          };
+          mutation.mutate(valuesWithFile);
+        })
+        .catch(error => {
+          console.error("Error uploading file:", error);
+          toast({
+            title: "Error uploading file",
+            description: "There was an error uploading the file. Please try again.",
+            variant: "destructive",
+          });
+        });
+    } else {
+      // If no file, just submit the form data
+      mutation.mutate(values);
+    }
   };
 
   // Watch representation type to show/hide company fields
@@ -570,6 +614,42 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                     </FormItem>
                   )}
                 />
+
+                {/* File Upload Control */}
+                <div className="mt-4">
+                  <FormLabel>Attachment</FormLabel>
+                  <div className="border border-gray-200 rounded-md p-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full flex items-center justify-center"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <Paperclip className="mr-2 h-4 w-4" />
+                            Select File
+                          </Button>
+                          {selectedFile && (
+                            <div className="text-sm text-gray-600 truncate max-w-[200px]">
+                              {selectedFile.name}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Supported file types: PDF, DOC, DOCX, JPG, PNG (max 10MB)
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

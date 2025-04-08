@@ -17,9 +17,9 @@ export default function DocumentNew() {
           className="mr-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Documents
+          Voltar para Documentos
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight">Register New Document</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Cadastrar Novo Documento</h1>
       </div>
 
       <DocumentForm />

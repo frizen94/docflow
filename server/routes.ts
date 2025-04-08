@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import session from "express-session";
@@ -6,6 +6,9 @@ import MemoryStore from "memorystore";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import { 
   insertUserSchema, 
   insertAreaSchema, 
@@ -599,6 +602,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ error: "Failed to retrieve dashboard stats" });
     }
+  });
+
+  // Set up file uploads
+  // Create uploads directory if it doesn't exist
+  const uploadDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  // Configure multer for file storage
+  const fileStorage = multer.diskStorage({
+    destination: function(_req, _file, cb) {
+      cb(null, uploadDir);
+    },
+    filename: function(_req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+
+  const upload = multer({
+    storage: fileStorage,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB file size limit
+    },
+    fileFilter: (_req, file, cb) => {
+      // Accept only specific file types
+      const allowedTypes = [
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/png'
+      ];
+      
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Tipo de arquivo inválido. Apenas arquivos PDF, DOC, DOCX, JPG e PNG são permitidos.'), false);
+      }
+    }
+  });
+
+  // File upload endpoint
+  app.post('/api/upload', isAuthenticated, (req, res) => {
+    upload.single('file')(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ 
+          error: err.message || 'Erro ao fazer upload do arquivo' 
+        });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+      }
+
+      // Return file path for storage in the document record
+      res.json({ 
+        success: true, 
+        filePath: req.file.path,
+        fileName: req.file.originalname
+      });
+    });
+  });
+
+  // Endpoint to serve uploaded files
+  app.get('/api/files/:filename', isAuthenticated, (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(uploadDir, filename);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Arquivo não encontrado' });
+    }
+    
+    // Send the file
+    res.sendFile(filePath);
   });
 
   const httpServer = createServer(app);

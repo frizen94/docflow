@@ -24,10 +24,10 @@ export default function Documents() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-        <h1 className="text-2xl font-bold tracking-tight mb-4 sm:mb-0">Documents</h1>
+        <h1 className="text-2xl font-bold tracking-tight mb-4 sm:mb-0">Documentos</h1>
         <Button onClick={() => setLocation("/documents/new")}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          New Document
+          Novo Documento
         </Button>
       </div>
 

@@ -13,7 +13,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, FileText, User, Building, CornerDownRight, Clipboard, SendIcon, HistoryIcon } from "lucide-react";
+import { ArrowLeft, FileText, User, Building, CornerDownRight, Clipboard, SendIcon, HistoryIcon, Download, Paperclip } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -222,34 +222,34 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <FileText className="h-5 w-5 mr-2" />
-                  Document Information
+                  Informações do Documento
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Document Type</p>
+                      <p className="text-sm font-medium text-gray-500">Tipo de Documento</p>
                       <p className="mt-1">{getDocTypeName(document.documentTypeId)}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Document Number</p>
+                      <p className="text-sm font-medium text-gray-500">Número do Documento</p>
                       <p className="mt-1">{document.documentNumber}</p>
                     </div>
                   </div>
                   
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Subject</p>
+                    <p className="text-sm font-medium text-gray-500">Assunto</p>
                     <p className="mt-1">{document.subject}</p>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Origin Area</p>
+                      <p className="text-sm font-medium text-gray-500">Área de Origem</p>
                       <p className="mt-1">{getAreaName(document.originAreaId)}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Current Area</p>
+                      <p className="text-sm font-medium text-gray-500">Área Atual</p>
                       <p className="mt-1">{getAreaName(document.currentAreaId)}</p>
                     </div>
                   </div>
@@ -271,37 +271,53 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                             : "bg-red-100 text-red-800"
                         }
                       >
-                        {document.status}
+                        {document.status === "Completed" 
+                          ? "Concluído" 
+                          : document.status === "In Progress" 
+                            ? "Em Andamento" 
+                            : document.status}
                       </Badge>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Created At</p>
-                      <p className="mt-1">{format(new Date(document.createdAt), "MMM dd, yyyy")}</p>
+                      <p className="text-sm font-medium text-gray-500">Data de Criação</p>
+                      <p className="mt-1">{format(new Date(document.createdAt), "dd/MM/yyyy")}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Deadline</p>
+                      <p className="text-sm font-medium text-gray-500">Prazo</p>
                       <p className="mt-1">
                         {document.deadline
-                          ? format(new Date(document.deadline), "MMM dd, yyyy")
-                          : "No deadline"}
+                          ? format(new Date(document.deadline), "dd/MM/yyyy")
+                          : "Sem prazo definido"}
                       </p>
                     </div>
                   </div>
                   
                   {document.filePath && (
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Attachment</p>
-                      <a
-                        href={document.filePath}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary-600 hover:text-primary-500 mt-1 inline-block"
-                      >
-                        View attachment
-                      </a>
+                      <p className="text-sm font-medium text-gray-500">Anexo</p>
+                      <div className="flex items-center mt-1">
+                        <Paperclip className="h-4 w-4 mr-1 text-gray-500" />
+                        <a
+                          href={`/api/files/${document.filePath.split('/').pop()}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary-600 hover:text-primary-500 inline-flex items-center mr-3"
+                        >
+                          {document.fileName || "Anexo do documento"}
+                        </a>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="ml-2 h-7 px-2"
+                          onClick={() => window.open(`/api/files/${document.filePath.split('/').pop()}`, '_blank')}
+                        >
+                          <Download className="h-3.5 w-3.5 mr-1" />
+                          Baixar
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -313,14 +329,14 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <User className="h-5 w-5 mr-2" />
-                  Sender Information
+                  Informações do Remetente
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">DNI</p>
+                      <p className="text-sm font-medium text-gray-500">CPF</p>
                       <p className="mt-1">{document.senderDni}</p>
                     </div>
                     <div>
@@ -384,7 +400,7 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                       name="toAreaId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Destination Area</FormLabel>
+                          <FormLabel>Área de Destino</FormLabel>
                           <Select
                             onValueChange={(value) => field.onChange(Number(value))}
                             value={field.value ? field.value.toString() : undefined}

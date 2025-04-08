@@ -51,14 +51,14 @@ export default function DocumentFilters({ onFilterChange }: DocumentFiltersProps
             </Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue placeholder="Select status" />
+                <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="all">Todos os Status</SelectItem>
+                  <SelectItem value="In Progress">Em Progresso</SelectItem>
+                  <SelectItem value="Completed">Concluído</SelectItem>
+                  <SelectItem value="Pending">Pendente</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -66,15 +66,15 @@ export default function DocumentFilters({ onFilterChange }: DocumentFiltersProps
 
           <div className="sm:col-span-2">
             <Label htmlFor="area-filter" className="block text-sm font-medium text-gray-700">
-              Area
+              Área
             </Label>
             <Select value={areaId} onValueChange={setAreaId}>
               <SelectTrigger className="w-full mt-1">
-                <SelectValue placeholder="Select area" />
+                <SelectValue placeholder="Selecione a área" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">All Areas</SelectItem>
+                  <SelectItem value="all">Todas as Áreas</SelectItem>
                   {areas?.map((area) => (
                     <SelectItem key={area.id} value={area.id.toString()}>
                       {area.name}
@@ -87,7 +87,7 @@ export default function DocumentFilters({ onFilterChange }: DocumentFiltersProps
 
           <div className="sm:col-span-2">
             <Label htmlFor="search-documents" className="block text-sm font-medium text-gray-700">
-              Search
+              Pesquisar
             </Label>
             <div className="mt-1 relative rounded-md">
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -98,7 +98,7 @@ export default function DocumentFilters({ onFilterChange }: DocumentFiltersProps
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
-                placeholder="Search documents..."
+                placeholder="Buscar documentos..."
               />
             </div>
           </div>

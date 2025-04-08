@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Activity } from "lucide-react";
+import { Eye, Activity, Paperclip, FileText } from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import TrackingModal from "./tracking-modal";
 import { Badge } from "@/components/ui/badge";
@@ -80,13 +81,13 @@ export default function DocumentTable({ status, areaId }: DocumentTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Tracking Number</TableHead>
-              <TableHead>Document</TableHead>
-              <TableHead>Sender</TableHead>
-              <TableHead>Current Location</TableHead>
+              <TableHead>Nº Protocolo</TableHead>
+              <TableHead>Documento</TableHead>
+              <TableHead>Remetente</TableHead>
+              <TableHead>Localização Atual</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Deadline</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Prazo</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -153,7 +154,7 @@ export default function DocumentTable({ status, areaId }: DocumentTableProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {doc.deadline ? format(new Date(doc.deadline), "MMM dd, yyyy") : "N/A"}
+                    {doc.deadline ? format(new Date(doc.deadline), "dd/MM/yyyy", { locale: ptBR }) : "N/A"}
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
@@ -163,7 +164,7 @@ export default function DocumentTable({ status, areaId }: DocumentTableProps) {
                         onClick={() => setLocation(`/documents/${doc.id}`)}
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        View
+                        Ver
                       </Button>
                       <Button
                         variant="outline"
@@ -171,8 +172,20 @@ export default function DocumentTable({ status, areaId }: DocumentTableProps) {
                         onClick={() => setSelectedDocumentId(doc.id)}
                       >
                         <Activity className="h-4 w-4 mr-1" />
-                        Track
+                        Histórico
                       </Button>
+                      {doc.filePath ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                        >
+                          <a href={doc.filePath} target="_blank" rel="noopener noreferrer">
+                            <FileText className="h-4 w-4 mr-1" />
+                            Anexo
+                          </a>
+                        </Button>
+                      ) : null}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -180,7 +193,7 @@ export default function DocumentTable({ status, areaId }: DocumentTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10 text-gray-500">
-                  No documents found
+                  Nenhum documento encontrado
                 </TableCell>
               </TableRow>
             )}
