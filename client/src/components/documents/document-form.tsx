@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -59,12 +59,12 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch areas for select
-  const { data: areas } = useQuery<Area[]>({
+  const { data: areas, isLoading: isLoadingAreas } = useQuery<Area[]>({
     queryKey: ["/api/areas"],
   });
 
   // Fetch document types for select
-  const { data: docTypes } = useQuery<DocumentType[]>({
+  const { data: docTypes, isLoading: isLoadingDocTypes } = useQuery<DocumentType[]>({
     queryKey: ["/api/document-types"],
   });
 
@@ -107,8 +107,15 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       };
     }
 
+    // Verifica se existem áreas carregadas e define valores padrão
+    const firstAreaId = areas && areas.length > 0 ? areas[0].id : undefined;
+    const firstDocTypeId = docTypes && docTypes.length > 0 ? docTypes[0].id : undefined;
+
     return {
       documentNumber: "",
+      documentTypeId: firstDocTypeId,
+      originAreaId: firstAreaId,
+      currentAreaId: firstAreaId,
       senderDni: "",
       senderName: "",
       senderLastName: "",
@@ -122,11 +129,19 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
     };
   };
 
-  // Form setup
+  // Form setup with effect to update form when data loads
   const form = useForm<DocumentFormValues>({
     resolver: zodResolver(documentFormSchema),
     defaultValues: getDefaultValues(),
   });
+  
+  // Effect to update form values when areas or document types load
+  useEffect(() => {
+    if (!isLoadingAreas && !isLoadingDocTypes) {
+      // Reset form with updated default values after data is loaded
+      form.reset(getDefaultValues());
+    }
+  }, [isLoadingAreas, isLoadingDocTypes, areas, docTypes]);
 
   // Mutation for creating or updating documents
   const mutation = useMutation({
@@ -260,14 +275,15 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-6">
-          {/* Document Information Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações do Documento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Coluna da Esquerda - Informações do Documento */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações do Documento</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="documentNumber"
@@ -291,20 +307,28 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                       <Select
                         onValueChange={(value) => field.onChange(Number(value))}
                         defaultValue={field.value?.toString()}
+                        disabled={isLoadingDocTypes || !docTypes?.length}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo de documento" />
+                            <SelectValue placeholder={isLoadingDocTypes ? "Carregando..." : "Selecione o tipo de documento"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {docTypes?.map((type) => (
+                          {docTypes?.length ? docTypes.map((type) => (
                             <SelectItem key={type.id} value={type.id.toString()}>
                               {type.name}
                             </SelectItem>
-                          ))}
+                          )) : (
+                            <SelectItem value="0" disabled>Nenhum tipo de documento encontrado</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
+                      {!docTypes?.length && !isLoadingDocTypes && (
+                        <p className="text-sm text-red-500 mt-1">
+                          É necessário criar tipos de documentos primeiro
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -319,20 +343,28 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                       <Select
                         onValueChange={(value) => field.onChange(Number(value))}
                         defaultValue={field.value?.toString()}
+                        disabled={isLoadingAreas || !areas?.length}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a área de origem" />
+                            <SelectValue placeholder={isLoadingAreas ? "Carregando..." : "Selecione a área de origem"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {areas?.map((area) => (
+                          {areas?.length ? areas.map((area) => (
                             <SelectItem key={area.id} value={area.id.toString()}>
                               {area.name}
                             </SelectItem>
-                          ))}
+                          )) : (
+                            <SelectItem value="0" disabled>Nenhuma área encontrada</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
+                      {!areas?.length && !isLoadingAreas && (
+                        <p className="text-sm text-red-500 mt-1">
+                          É necessário criar áreas primeiro
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -347,20 +379,28 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                       <Select
                         onValueChange={(value) => field.onChange(Number(value))}
                         defaultValue={field.value?.toString()}
+                        disabled={isLoadingAreas || !areas?.length}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a área de destino" />
+                            <SelectValue placeholder={isLoadingAreas ? "Carregando..." : "Selecione a área de destino"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {areas?.map((area) => (
+                          {areas?.length ? areas.map((area) => (
                             <SelectItem key={area.id} value={area.id.toString()}>
                               {area.name}
                             </SelectItem>
-                          ))}
+                          )) : (
+                            <SelectItem value="0" disabled>Nenhuma área encontrada</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
+                      {!areas?.length && !isLoadingAreas && (
+                        <p className="text-sm text-red-500 mt-1">
+                          É necessário criar áreas primeiro
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -445,12 +485,185 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
               </div>
             </CardContent>
           </Card>
+          </div>
+          
+          {/* Coluna da Direita - Informações do Remetente */}
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações do Remetente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="senderDni"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>DNI/CPF</FormLabel>
+                        <div className="flex items-center space-x-2">
+                          <FormControl className="flex-1">
+                            <Input
+                              {...field}
+                              placeholder="Digite o DNI/CPF do remetente"
+                              onBlur={() => searchEmployeeByDni(field.value)}
+                            />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => searchEmployeeByDni(field.value)}
+                          >
+                            Buscar
+                          </Button>
+                        </div>
+                        <FormDescription>
+                          Digite o DNI/CPF e clique em buscar para preencher automaticamente
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="senderName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Nome do remetente" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="senderLastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sobrenome</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Sobrenome do remetente" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="senderEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>E-mail</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" placeholder="E-mail do remetente" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="senderPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Telefone do remetente" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="senderAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Endereço</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Endereço do remetente" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="representation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Representação</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o tipo de representação" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="A Nombre Propio">Próprio</SelectItem>
+                            <SelectItem value="Representando a una Empresa">Representante Empresa</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {watchRepresentation === "Representando a una Empresa" && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="companyRuc"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CNPJ da Empresa</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="CNPJ da empresa" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="companyName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome da Empresa</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Nome da empresa" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         <div className="flex justify-center">
           <Button
             type="submit"
-            className="bg-success-600 hover:bg-success-700 text-lg font-semibold px-10 py-3 rounded-md"
+            className="bg-primary text-white hover:bg-primary/90 text-lg font-semibold px-10 py-6 rounded-md"
             disabled={mutation.isPending}
           >
             {mutation.isPending ? "Salvando..." : editMode ? "Atualizar Documento" : "Cadastrar Documento"}
