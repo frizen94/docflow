@@ -6,6 +6,8 @@ import {
   Document, InsertDocument, documents,
   DocumentTracking, InsertDocumentTracking, documentTracking
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, isNotNull, lt, gt, ne, desc } from "drizzle-orm";
 
 // Interface defining all the storage operations
 export interface IStorage {
@@ -460,4 +462,317 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  async listUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async updateUser(id: number, user: Partial<InsertUser>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(user)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Area operations
+  async getArea(id: number): Promise<Area | undefined> {
+    const [area] = await db.select().from(areas).where(eq(areas.id, id));
+    return area || undefined;
+  }
+
+  async createArea(area: InsertArea): Promise<Area> {
+    const [newArea] = await db.insert(areas).values(area).returning();
+    return newArea;
+  }
+
+  async listAreas(): Promise<Area[]> {
+    return await db.select().from(areas);
+  }
+
+  async updateArea(id: number, area: Partial<InsertArea>): Promise<Area | undefined> {
+    const [updatedArea] = await db
+      .update(areas)
+      .set(area)
+      .where(eq(areas.id, id))
+      .returning();
+    return updatedArea || undefined;
+  }
+
+  async deleteArea(id: number): Promise<boolean> {
+    const result = await db.delete(areas).where(eq(areas.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Document Type operations
+  async getDocumentType(id: number): Promise<DocumentType | undefined> {
+    const [docType] = await db.select().from(documentTypes).where(eq(documentTypes.id, id));
+    return docType || undefined;
+  }
+
+  async createDocumentType(docType: InsertDocumentType): Promise<DocumentType> {
+    const [newDocType] = await db.insert(documentTypes).values(docType).returning();
+    return newDocType;
+  }
+
+  async listDocumentTypes(): Promise<DocumentType[]> {
+    return await db.select().from(documentTypes);
+  }
+
+  async updateDocumentType(id: number, docType: Partial<InsertDocumentType>): Promise<DocumentType | undefined> {
+    const [updatedDocType] = await db
+      .update(documentTypes)
+      .set(docType)
+      .where(eq(documentTypes.id, id))
+      .returning();
+    return updatedDocType || undefined;
+  }
+
+  async deleteDocumentType(id: number): Promise<boolean> {
+    const result = await db.delete(documentTypes).where(eq(documentTypes.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Employee operations
+  async getEmployee(id: number): Promise<Employee | undefined> {
+    const [employee] = await db.select().from(employees).where(eq(employees.id, id));
+    return employee || undefined;
+  }
+
+  async getEmployeeByDni(dni: string): Promise<Employee | undefined> {
+    const [employee] = await db.select().from(employees).where(eq(employees.dni, dni));
+    return employee || undefined;
+  }
+
+  async createEmployee(employee: InsertEmployee): Promise<Employee> {
+    const [newEmployee] = await db.insert(employees).values(employee).returning();
+    return newEmployee;
+  }
+
+  async listEmployees(): Promise<Employee[]> {
+    return await db.select().from(employees);
+  }
+
+  async updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined> {
+    const [updatedEmployee] = await db
+      .update(employees)
+      .set(employee)
+      .where(eq(employees.id, id))
+      .returning();
+    return updatedEmployee || undefined;
+  }
+
+  async deleteEmployee(id: number): Promise<boolean> {
+    const result = await db.delete(employees).where(eq(employees.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  // Document operations
+  async getDocument(id: number): Promise<Document | undefined> {
+    const [document] = await db.select().from(documents).where(eq(documents.id, id));
+    return document || undefined;
+  }
+
+  async getDocumentByTrackingNumber(trackingNumber: string): Promise<Document | undefined> {
+    const [document] = await db.select().from(documents).where(eq(documents.trackingNumber, trackingNumber));
+    return document || undefined;
+  }
+
+  async createDocument(document: InsertDocument): Promise<Document> {
+    const [newDocument] = await db.insert(documents).values(document).returning();
+    return newDocument;
+  }
+
+  async listDocuments(): Promise<Document[]> {
+    return await db.select().from(documents);
+  }
+
+  async updateDocument(id: number, document: Partial<InsertDocument>): Promise<Document | undefined> {
+    const [updatedDocument] = await db
+      .update(documents)
+      .set(document)
+      .where(eq(documents.id, id))
+      .returning();
+    return updatedDocument || undefined;
+  }
+
+  async deleteDocument(id: number): Promise<boolean> {
+    const result = await db.delete(documents).where(eq(documents.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getDocumentsByAreaId(areaId: number): Promise<Document[]> {
+    return await db.select().from(documents).where(eq(documents.currentAreaId, areaId));
+  }
+
+  async getDocumentsByEmployeeId(employeeId: number): Promise<Document[]> {
+    return await db.select().from(documents).where(eq(documents.currentEmployeeId, employeeId));
+  }
+
+  async getDocumentsByStatus(status: string): Promise<Document[]> {
+    return await db.select().from(documents).where(eq(documents.status, status));
+  }
+
+  calculateDeadlineDate(startDate: Date, deadlineDays: number): Date {
+    // Simple deadline calculation - add the number of days to the start date
+    const deadlineDate = new Date(startDate);
+    deadlineDate.setDate(deadlineDate.getDate() + deadlineDays);
+    return deadlineDate;
+  }
+
+  async getDocumentsWithDeadline(days: number): Promise<Document[]> {
+    const today = new Date();
+    const futureDate = new Date(today);
+    futureDate.setDate(today.getDate() + days);
+    
+    return await db.select().from(documents)
+      .where(
+        and(
+          isNotNull(documents.deadline),
+          lt(documents.deadline, futureDate),
+          gt(documents.deadline, today),
+          ne(documents.status, 'Completed')
+        )
+      );
+  }
+
+  // Document Tracking operations
+  async getDocumentTracking(id: number): Promise<DocumentTracking | undefined> {
+    const [tracking] = await db.select().from(documentTracking).where(eq(documentTracking.id, id));
+    return tracking || undefined;
+  }
+
+  async createDocumentTracking(tracking: InsertDocumentTracking): Promise<DocumentTracking> {
+    const [newTracking] = await db.insert(documentTracking).values(tracking).returning();
+    return newTracking;
+  }
+
+  async listDocumentTrackingByDocumentId(documentId: number): Promise<DocumentTracking[]> {
+    return await db.select()
+      .from(documentTracking)
+      .where(eq(documentTracking.documentId, documentId))
+      .orderBy(desc(documentTracking.createdAt));
+  }
+
+  async getRecentActivities(limit: number): Promise<DocumentTracking[]> {
+    return await db.select()
+      .from(documentTracking)
+      .orderBy(desc(documentTracking.createdAt))
+      .limit(limit);
+  }
+
+  async forwardDocumentToArea(documentId: number, toAreaId: number, description: string, deadlineDays?: number): Promise<DocumentTracking> {
+    // Buscar o documento atual
+    const document = await this.getDocument(documentId);
+    if (!document) {
+      throw new Error(`Documento com ID ${documentId} não encontrado`);
+    }
+    
+    const fromAreaId = document.currentAreaId;
+    
+    // Calcular prazo se fornecido
+    let deadline = undefined;
+    if (deadlineDays) {
+      deadline = this.calculateDeadlineDate(new Date(), deadlineDays);
+    }
+    
+    // Atualizar o documento com a nova área atual
+    await this.updateDocument(documentId, {
+      currentAreaId: toAreaId,
+      currentEmployeeId: null, // Limpar o funcionário designado ao mudar de área
+      deadline: deadline || null,
+      deadlineDays: deadlineDays || null
+    });
+    
+    // Criar o registro de tracking
+    const tracking: InsertDocumentTracking = {
+      documentId,
+      fromAreaId,
+      toAreaId,
+      description: description || null,
+      attachmentPath: null,
+      fromEmployeeId: null,
+      toEmployeeId: null,
+      deadlineDays: deadlineDays || null,
+      createdBy: document.createdBy
+    };
+    
+    return await this.createDocumentTracking(tracking);
+  }
+
+  async forwardDocumentToEmployee(documentId: number, toAreaId: number, toEmployeeId: number, description: string, deadlineDays?: number): Promise<DocumentTracking> {
+    // Buscar o documento atual
+    const document = await this.getDocument(documentId);
+    if (!document) {
+      throw new Error(`Documento com ID ${documentId} não encontrado`);
+    }
+    
+    // Verificar se o funcionário pertence à área destino
+    const employee = await this.getEmployee(toEmployeeId);
+    if (!employee) {
+      throw new Error(`Funcionário com ID ${toEmployeeId} não encontrado`);
+    }
+    
+    if (employee.areaId !== toAreaId) {
+      throw new Error(`Funcionário com ID ${toEmployeeId} não pertence à área com ID ${toAreaId}`);
+    }
+    
+    const fromAreaId = document.currentAreaId;
+    const fromEmployeeId = document.currentEmployeeId || null;
+    
+    // Calcular prazo se fornecido
+    let deadline = undefined;
+    if (deadlineDays) {
+      deadline = this.calculateDeadlineDate(new Date(), deadlineDays);
+    }
+    
+    // Atualizar o documento com a nova área e funcionário atual
+    await this.updateDocument(documentId, {
+      currentAreaId: toAreaId,
+      currentEmployeeId: toEmployeeId,
+      deadline: deadline || null,
+      deadlineDays: deadlineDays || null
+    });
+    
+    // Criar o registro de tracking
+    const tracking: InsertDocumentTracking = {
+      documentId,
+      fromAreaId,
+      toAreaId,
+      fromEmployeeId,
+      toEmployeeId,
+      description: description || null,
+      attachmentPath: null,
+      deadlineDays: deadlineDays || null,
+      createdBy: document.createdBy
+    };
+    
+    return await this.createDocumentTracking(tracking);
+  }
+}
+
+// Use database storage instead of memory storage
+export const storage = new DatabaseStorage();
