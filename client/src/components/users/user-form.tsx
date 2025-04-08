@@ -1,8 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertUserSchema, User } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { insertUserSchema, User, Employee } from "@shared/schema";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -32,6 +32,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 
 // Extended schema for form validation with password confirmation
 const userFormSchema = insertUserSchema.extend({
@@ -56,6 +57,11 @@ interface UserFormProps {
 
 export default function UserForm({ isOpen, onClose, editMode, user }: UserFormProps) {
   const { toast } = useToast();
+
+  // Fetch employees for name dropdown
+  const { data: employees, isLoading: isLoadingEmployees } = useQuery<Employee[]>({
+    queryKey: ["/api/employees"],
+  });
 
   // Default values for the form
   const defaultValues: UserFormValues = {
@@ -144,10 +150,41 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Digite o nome completo" />
-                  </FormControl>
+                  <FormLabel>Nome do Funcionário</FormLabel>
+                  {isLoadingEmployees ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-muted-foreground">Carregando funcionários...</span>
+                    </div>
+                  ) : employees && employees.length > 0 ? (
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um funcionário" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {employees.map((employee) => (
+                          <SelectItem 
+                            key={employee.id} 
+                            value={`${employee.firstName} ${employee.lastName}`}
+                          >
+                            {`${employee.firstName} ${employee.lastName}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded-md">
+                      Nenhum funcionário cadastrado. Por favor cadastre funcionários primeiro.
+                    </div>
+                  )}
+                  <FormDescription>
+                    Selecione um funcionário da lista para associar a este usuário.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

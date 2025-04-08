@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Activity, Paperclip, FileText } from "lucide-react";
+import { Eye, Activity, Paperclip, FileText, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
@@ -22,9 +22,10 @@ import { Badge } from "@/components/ui/badge";
 interface DocumentTableProps {
   status?: string;
   areaId?: number;
+  onEdit?: (document: Document) => void;
 }
 
-export default function DocumentTable({ status, areaId }: DocumentTableProps) {
+export default function DocumentTable({ status, areaId, onEdit }: DocumentTableProps) {
   const [_, setLocation] = useLocation();
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
 
@@ -179,6 +180,19 @@ export default function DocumentTable({ status, areaId }: DocumentTableProps) {
                         <Activity className="h-4 w-4 mr-1" />
                         Histórico
                       </Button>
+                      {onEdit && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(doc);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                      )}
                       {doc.filePath ? (
                         <Button
                           variant="outline"

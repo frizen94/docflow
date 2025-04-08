@@ -11,7 +11,7 @@ import AuthPage from "./pages/auth-page";
 import Dashboard from "./pages/dashboard";
 import Documents from "./pages/documents";
 import DocumentDetails from "./pages/document-details";
-import DocumentNew from "./pages/document-new";
+// DocumentNew foi substituído pelo modal
 import Areas from "./pages/areas";
 import DocumentTypes from "./pages/document-types";
 import Employees from "./pages/employees";
@@ -37,11 +37,7 @@ function Router() {
         </Layout>
       </ProtectedRoute>
       
-      <ProtectedRoute path="/documents/new">
-        <Layout>
-          <DocumentNew />
-        </Layout>
-      </ProtectedRoute>
+      {/* Rota de documento novo foi substituída pelo modal */}
       
       <ProtectedRoute path="/documents/:id">
         {(params) => (
