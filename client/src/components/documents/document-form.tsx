@@ -248,190 +248,11 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Sender Information Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Sender Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex space-x-4">
-                  <div className="flex-1">
-                    <FormField
-                      control={form.control}
-                      name="senderDni"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>DNI</FormLabel>
-                          <div className="flex space-x-2">
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="Enter DNI"
-                                className="flex-1"
-                              />
-                            </FormControl>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => searchEmployeeByDni(field.value)}
-                            >
-                              Search
-                            </Button>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="senderName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter first name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="senderLastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter last name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="senderPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter phone number" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="senderEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Enter email" type="email" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="senderAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter address" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="representation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Representation</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            setRepresentationType(value);
-                          }}
-                          className="flex flex-col space-y-1"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A Nombre Propio" id="rep1" />
-                            <Label htmlFor="rep1">A Nombre Propio</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="A Otra Persona Natural" id="rep2" />
-                            <Label htmlFor="rep2">A Otra Persona Natural</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Persona Jurídica" id="rep3" />
-                            <Label htmlFor="rep3">Persona Jurídica</Label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {watchRepresentation === "Persona Jurídica" && (
-                  <div className="space-y-4 border p-4 rounded-md border-gray-200">
-                    <FormField
-                      control={form.control}
-                      name="companyRuc"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>RUC</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter RUC" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="companyName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Company Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Enter company name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 gap-6">
           {/* Document Information Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Document Information</CardTitle>
+              <CardTitle>Informações do Documento</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -440,14 +261,14 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                   name="originAreaId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Origin Area</FormLabel>
+                      <FormLabel>Área de Origem</FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(Number(value))}
                         defaultValue={field.value?.toString()}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select origin area" />
+                            <SelectValue placeholder="Selecione a área de origem" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -468,14 +289,14 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                   name="currentAreaId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Destination Area</FormLabel>
+                      <FormLabel>Área de Destino</FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(Number(value))}
                         defaultValue={field.value?.toString()}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select destination area" />
+                            <SelectValue placeholder="Selecione a área de destino" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -496,14 +317,14 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                   name="documentTypeId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Document Type</FormLabel>
+                      <FormLabel>Tipo de Documento</FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(Number(value))}
                         defaultValue={field.value?.toString()}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select document type" />
+                            <SelectValue placeholder="Selecione o tipo de documento" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -524,9 +345,9 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                   name="documentNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Document Number</FormLabel>
+                      <FormLabel>Número do Documento</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Enter document number" />
+                        <Input {...field} placeholder="Digite o número do documento" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -538,11 +359,11 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Subject</FormLabel>
+                      <FormLabel>Assunto</FormLabel>
                       <FormControl>
                         <Textarea
                           {...field}
-                          placeholder="Enter document subject"
+                          placeholder="Digite o assunto do documento"
                           rows={3}
                         />
                       </FormControl>
@@ -557,13 +378,13 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                     name="folios"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Number of Folios</FormLabel>
+                        <FormLabel>Número de Folhas</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             type="number"
                             min={1}
-                            placeholder="Enter number of folios"
+                            placeholder="Digite o número de folhas"
                           />
                         </FormControl>
                         <FormMessage />
@@ -576,13 +397,13 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                     name="deadline"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Deadline</FormLabel>
+                        <FormLabel>Prazo</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             type="date"
                             min={format(new Date(), "yyyy-MM-dd")}
-                            placeholder="Select deadline date"
+                            placeholder="Selecione a data de prazo"
                           />
                         </FormControl>
                         <FormMessage />
@@ -606,8 +427,8 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>
-                          I declare under penalty of perjury, that all the information
-                          provided is correct and truthful.
+                          Declaro sob as penas da lei que todas as informações
+                          fornecidas são corretas e verdadeiras.
                         </FormLabel>
                         <FormMessage />
                       </div>
@@ -617,7 +438,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
 
                 {/* File Upload Control */}
                 <div className="mt-4">
-                  <FormLabel>Attachment</FormLabel>
+                  <FormLabel>Anexo</FormLabel>
                   <div className="border border-gray-200 rounded-md p-4">
                     <div className="flex items-center space-x-4">
                       <div className="flex-1">
@@ -635,7 +456,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                             onClick={() => fileInputRef.current?.click()}
                           >
                             <Paperclip className="mr-2 h-4 w-4" />
-                            Select File
+                            Selecionar Arquivo
                           </Button>
                           {selectedFile && (
                             <div className="text-sm text-gray-600 truncate max-w-[200px]">
@@ -646,7 +467,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                       </div>
                     </div>
                     <p className="text-sm text-gray-500 mt-2">
-                      Supported file types: PDF, DOC, DOCX, JPG, PNG (max 10MB)
+                      Tipos de arquivo suportados: PDF, DOC, DOCX, JPG, PNG (máx. 10MB)
                     </p>
                   </div>
                 </div>
@@ -661,7 +482,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
             className="bg-success-600 hover:bg-success-700 text-lg px-8 py-2"
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? "Saving..." : editMode ? "Update Document" : "Register Document"}
+            {mutation.isPending ? "Salvando..." : editMode ? "Atualizar Documento" : "Cadastrar Documento"}
           </Button>
         </div>
       </form>

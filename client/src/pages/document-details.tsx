@@ -33,7 +33,7 @@ import DocumentTrackingHistory from "@/components/documents/document-tracking-hi
 // Schema for tracking form
 const trackingFormSchema = z.object({
   toAreaId: z.number({
-    required_error: "Please select a destination area",
+    required_error: "Por favor, selecione uma área de destino",
   }),
   description: z.string().optional(),
 });
@@ -106,8 +106,8 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Document transferred",
-        description: "The document has been successfully transferred to the selected area.",
+        title: "Documento transferido",
+        description: "O documento foi transferido com sucesso para a área selecionada.",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/documents/${id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
@@ -115,8 +115,8 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to transfer document: ${error}`,
+        title: "Erro",
+        description: `Falha ao transferir o documento: ${error}`,
         variant: "destructive",
       });
     },
@@ -135,16 +135,16 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Document completed",
-        description: "The document has been marked as completed.",
+        title: "Documento concluído",
+        description: "O documento foi marcado como concluído.",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/documents/${id}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to complete document: ${error}`,
+        title: "Erro",
+        description: `Falha ao concluir o documento: ${error}`,
         variant: "destructive",
       });
     },
