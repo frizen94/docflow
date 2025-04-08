@@ -300,23 +300,29 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                       <p className="text-sm font-medium text-gray-500">Anexo</p>
                       <div className="flex items-center mt-1">
                         <Paperclip className="h-4 w-4 mr-1 text-gray-500" />
-                        <a
-                          href={`/api/files/${document.filePath.split('/').pop()}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary-600 hover:text-primary-500 inline-flex items-center mr-3"
-                        >
-                          {document.fileName || "Anexo do documento"}
-                        </a>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="ml-2 h-7 px-2"
-                          onClick={() => window.open(`/api/files/${document.filePath.split('/').pop()}`, '_blank')}
-                        >
-                          <Download className="h-3.5 w-3.5 mr-1" />
-                          Baixar
-                        </Button>
+                        {document.filePath ? (
+                          <>
+                            <a
+                              href={`/api/files/${document.filePath.split('/').pop()}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary-600 hover:text-primary-500 inline-flex items-center mr-3"
+                            >
+                              {document.filePath.split('/').pop() || "Anexo do documento"}
+                            </a>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="ml-2 h-7 px-2"
+                              onClick={() => document.filePath && window.open(`/api/files/${document.filePath.split('/').pop()}`, '_blank')}
+                            >
+                              <Download className="h-3.5 w-3.5 mr-1" />
+                              Baixar
+                            </Button>
+                          </>
+                        ) : (
+                          <span className="text-gray-500">Nenhum arquivo anexado</span>
+                        )}
                       </div>
                     </div>
                   )}

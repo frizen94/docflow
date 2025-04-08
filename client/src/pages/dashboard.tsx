@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -24,6 +25,7 @@ export default function Dashboard() {
     queryKey: ["/api/dashboard/stats"],
   });
   const { toast } = useToast();
+  const [_, setLocation] = useLocation();
   const [visaoTipo, setVisaoTipo] = useState<"individual" | "setor" | "setor_e_subordinados">("individual");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
@@ -67,16 +69,27 @@ export default function Dashboard() {
         <div className="flex-1">
           <Card className="border-0 shadow-sm">
             <CardContent className="p-6">
-              <h1 className="text-xl font-medium mb-2">Seja bem-vindo (a), José!</h1>
-              <p className="text-gray-500 text-sm">
-                O sistema foi atualizado dia 15/03/2025, com uma nova versão 1.3.7.0. 
-                <button 
-                  className="ml-1 text-primary-600 hover:underline" 
-                  onClick={() => toast({ title: "Ajuda", description: "Clique aqui para ver as melhorias" })}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                  <h1 className="text-xl font-medium mb-2">Seja bem-vindo (a), José!</h1>
+                  <p className="text-gray-500 text-sm">
+                    O sistema foi atualizado dia 15/03/2025, com uma nova versão 1.3.7.0. 
+                    <button 
+                      className="ml-1 text-primary-600 hover:underline" 
+                      onClick={() => toast({ title: "Ajuda", description: "Clique aqui para ver as melhorias" })}
+                    >
+                      Clique aqui e veja as melhorias.
+                    </button>
+                  </p>
+                </div>
+                <button
+                  onClick={() => setLocation("/documents/new")}
+                  className="mt-4 md:mt-0 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 flex items-center"
                 >
-                  Clique aqui e veja as melhorias.
+                  <FileText className="mr-2 h-4 w-4" />
+                  Novo Documento
                 </button>
-              </p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -126,7 +139,7 @@ export default function Dashboard() {
         />
         <StatusCard 
           title="Processos em análise" 
-          value={stats?.totalDocuments - (stats?.completedDocuments || 0) || 0} 
+          value={stats ? (stats.totalDocuments - (stats.completedDocuments || 0)) : 0} 
           icon={<FileSignature className="h-5 w-5 text-green-500" />} 
           badgeColor="bg-green-100 text-green-500"
         />
@@ -142,7 +155,15 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 shadow-sm">
           <CardHeader className="pb-0">
-            <CardTitle className="text-base font-medium">Processos a vencer</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-medium">Processos a vencer</CardTitle>
+              <button 
+                className="text-xs text-primary hover:underline" 
+                onClick={() => setLocation("/documents?status=pendente")}
+              >
+                Ver todos
+              </button>
+            </div>
           </CardHeader>
           <CardContent className="p-4">
             <div className="flex space-x-3 mb-4">
@@ -203,10 +224,23 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-t">
-                      <td className="text-xs px-2 py-2">Nenhum documento pendente</td>
-                      <td className="text-xs text-right px-2 py-2">-</td>
-                    </tr>
+                    {(stats && stats.totalDocuments > 0) ? (
+                      Array(2).fill(0).map((_, i) => (
+                        <tr 
+                          key={i} 
+                          className="border-t cursor-pointer hover:bg-gray-50"
+                          onClick={() => setLocation(`/documents/${i+10}`)}
+                        >
+                          <td className="text-xs px-2 py-2 text-primary hover:underline">Ofício nº {1000+i}/2025</td>
+                          <td className="text-xs text-right px-2 py-2">{i+3}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr className="border-t">
+                        <td className="text-xs px-2 py-2">Nenhum documento pendente</td>
+                        <td className="text-xs text-right px-2 py-2">-</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -237,7 +271,15 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="shadow-sm">
           <CardHeader className="pb-0">
-            <CardTitle className="text-base font-medium">Processos em análise por tempo</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-medium">Processos em análise por tempo</CardTitle>
+              <button 
+                className="text-xs text-primary hover:underline" 
+                onClick={() => setLocation("/documents?status=em_analise")}
+              >
+                Ver todos
+              </button>
+            </div>
           </CardHeader>
           <CardContent className="p-4">
             <div className="overflow-x-auto">
@@ -256,10 +298,14 @@ export default function Dashboard() {
                         <td className="px-2 py-2 text-right"><Skeleton className="h-4 w-8 ml-auto" /></td>
                       </tr>
                     ))
-                  ) : stats?.totalDocuments ? (
+                  ) : (stats && stats.totalDocuments > 0) ? (
                     Array(3).fill(0).map((_, i) => (
-                      <tr key={i} className="border-t">
-                        <td className="text-xs px-2 py-2">12345.123456/2023-{i+1}</td>
+                      <tr 
+                        key={i} 
+                        className="border-t cursor-pointer hover:bg-gray-50"
+                        onClick={() => setLocation(`/documents/${i+1}`)}
+                      >
+                        <td className="text-xs px-2 py-2 text-primary hover:underline">12345.123456/2023-{i+1}</td>
                         <td className="text-xs text-right px-2 py-2">{i+1}</td>
                       </tr>
                     ))
@@ -311,8 +357,29 @@ interface StatusCardProps {
 }
 
 function StatusCard({ title, value, icon, badgeColor }: StatusCardProps) {
+  // Determinamos qual página abrir com base no título
+  const getRouteByTitle = () => {
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes("prazo")) {
+      return "/documents?status=pendente";
+    } else if (titleLower.includes("urgentes")) {
+      return "/documents?status=urgente";
+    } else if (titleLower.includes("análise")) {
+      return "/documents?status=em_analise";
+    } else if (titleLower.includes("assinar")) {
+      return "/documents?status=pendente_assinatura";
+    }
+    return "/documents";
+  };
+  
+  const [_, setLocation] = useLocation();
+  const route = getRouteByTitle();
+  
   return (
-    <Card className="shadow-sm">
+    <Card 
+      className="shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => setLocation(route)}
+    >
       <CardContent className="p-4 flex items-start justify-between">
         <div className="flex-1">
           <h3 className="text-sm font-medium mb-1">{title}</h3>

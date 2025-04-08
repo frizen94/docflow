@@ -640,6 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
       } else {
+        // @ts-ignore - Multer types don't match correct callback signature
         cb(new Error('Tipo de arquivo inválido. Apenas arquivos PDF, DOC, DOCX, JPG e PNG são permitidos.'), false);
       }
     }

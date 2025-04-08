@@ -129,14 +129,13 @@ export default function Sidebar({ user, isOpen, closeSidebar }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto custom-scrollbar">
           {filteredMenuItems.map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              onClick={() => closeSidebar()}
-            >
-              <a
+            <div key={item.path} onClick={() => {
+              setLocation(item.path);
+              closeSidebar();
+            }}>
+              <div
                 className={cn(
-                  "group flex items-center px-2 py-2 text-base font-medium rounded-md transition-colors duration-150",
+                  "group flex items-center px-2 py-2 text-base font-medium rounded-md transition-colors duration-150 cursor-pointer",
                   isActive(item.path)
                     ? "bg-gray-800 text-white"
                     : "text-gray-300 hover:bg-gray-700 hover:text-white"
@@ -144,8 +143,8 @@ export default function Sidebar({ user, isOpen, closeSidebar }: SidebarProps) {
               >
                 {item.icon}
                 {item.name}
-              </a>
-            </Link>
+              </div>
+            </div>
           ))}
         </nav>
 
