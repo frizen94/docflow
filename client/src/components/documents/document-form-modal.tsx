@@ -32,6 +32,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -44,10 +45,9 @@ const documentFormSchema = insertDocumentSchema
     deadlineDays: z.number().int().min(1, {
       message: "O prazo deve ser de pelo menos 1 dia",
     }).optional(),
-    // Garantir que campos opcionais sejam strings vazias em vez de null/undefined
     filePath: z.string().optional().transform(val => val || ''),
   })
-  .omit({ trackingNumber: true, deadline: true });
+  .omit({ trackingNumber: true, deadline: true, folios: true });
 
 type DocumentFormValues = z.infer<typeof documentFormSchema>;
 
@@ -105,8 +105,8 @@ export default function DocumentFormModal({
         currentAreaId: document.currentAreaId,
         status: document.status || "Pending",
         subject: document.subject || "",
-        folios: document.folios || 1,
         deadlineDays: deadlineDays,
+        filePath: document.filePath || "",
       };
     }
 
@@ -121,8 +121,8 @@ export default function DocumentFormModal({
       currentAreaId: firstAreaId,
       subject: "",
       status: "Pending",
-      folios: 1,
       deadlineDays: 5,
+      filePath: "",
     };
   };
 
@@ -165,6 +165,7 @@ export default function DocumentFormModal({
         originAreaId: Number(values.originAreaId),
         currentAreaId: Number(values.currentAreaId),
         ...(trackingNumber ? { trackingNumber } : {}),
+        folios: 1, // Valor padrão para folios
       };
       
       // Remove deadlineDays from the payload as it's not in the schema
@@ -255,6 +256,9 @@ export default function DocumentFormModal({
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editMode ? "Editar Documento" : "Cadastrar Novo Documento"}</DialogTitle>
+          <DialogDescription>
+            Preencha os dados do documento para {editMode ? "atualizar" : "cadastrar"}.
+          </DialogDescription>
         </DialogHeader>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -410,51 +414,28 @@ export default function DocumentFormModal({
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="folios"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Número de Folhas</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min={1}
-                              placeholder="Número de folhas"
-                              {...field}
-                              value={field.value || 1}
-                              onChange={(e) => field.onChange(e.target.valueAsNumber || 1)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="deadlineDays"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Prazo em Dias</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              type="number"
-                              min={1}
-                              placeholder="Prazo em dias"
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Vencimento: {format(addDays(new Date(), field.value || 0), "dd/MM/yyyy", { locale: ptBR })}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="deadlineDays"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prazo em Dias</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min={1}
+                            placeholder="Prazo em dias"
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Vencimento: {format(addDays(new Date(), field.value || 0), "dd/MM/yyyy", { locale: ptBR })}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   {/* File Upload Field */}
                   <div className="mt-4">
