@@ -87,8 +87,8 @@ export default function DocumentTable({ status, areaId }: DocumentTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Nº Protocolo</TableHead>
-              <TableHead>Documento</TableHead>
-              <TableHead>Remetente</TableHead>
+              <TableHead>Tipo de Documento</TableHead>
+              <TableHead>Nº do Documento</TableHead>
               <TableHead>Localização Atual</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Prazo</TableHead>
@@ -148,7 +148,7 @@ export default function DocumentTable({ status, areaId }: DocumentTableProps) {
                       <span>{getDocTypeName(doc.documentTypeId)}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{`${doc.senderName} ${doc.senderLastName}`}</TableCell>
+                  <TableCell>{doc.documentNumber}</TableCell>
                   <TableCell>{getAreaName(doc.currentAreaId)}</TableCell>
                   <TableCell>
                     <Badge

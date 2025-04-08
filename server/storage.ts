@@ -273,11 +273,6 @@ export class MemStorage implements IStorage {
     const newDocument: Document = { 
       ...document, 
       id,
-      senderEmail: document.senderEmail || null,
-      senderPhone: document.senderPhone || null,
-      senderAddress: document.senderAddress || null,
-      companyRuc: document.companyRuc || null,
-      companyName: document.companyName || null,
       filePath: document.filePath || null,
       deadline: document.deadline || null,
       deadlineDays: document.deadlineDays || null,

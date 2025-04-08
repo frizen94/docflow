@@ -43,11 +43,6 @@ const documentFormSchema = insertDocumentSchema
       message: "O prazo deve ser de pelo menos 1 dia",
     }).optional(),
     // Garantir que campos opcionais sejam strings vazias em vez de null/undefined
-    senderEmail: z.string().optional().transform(val => val || ''),
-    senderPhone: z.string().optional().transform(val => val || ''),
-    senderAddress: z.string().optional().transform(val => val || ''),
-    companyRuc: z.string().optional().transform(val => val || ''),
-    companyName: z.string().optional().transform(val => val || ''),
     filePath: z.string().optional().transform(val => val || ''),
   })
   .omit({ trackingNumber: true, deadline: true });
@@ -60,7 +55,7 @@ interface DocumentFormProps {
 }
 
 export default function DocumentForm({ editMode = false, documentId }: DocumentFormProps) {
-  const [representationType, setRepresentationType] = useState("A Nombre Propio");
+  // Removed representation type state
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -99,19 +94,11 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       return {
         documentNumber: document.documentNumber || "",
         documentTypeId: document.documentTypeId,
-        senderDni: document.senderDni || "",
-        senderName: document.senderName || "",
-        senderLastName: document.senderLastName || "",
-        senderEmail: document.senderEmail || "",
-        senderPhone: document.senderPhone || "",
-        senderAddress: document.senderAddress || "",
-        representation: document.representation || "A Nombre Propio",
-        companyRuc: document.companyRuc || "",
-        companyName: document.companyName || "",
         originAreaId: document.originAreaId,
         currentAreaId: document.currentAreaId,
         status: document.status || "Pending",
         subject: document.subject || "",
+        folios: document.folios || 1,
         deadlineDays: deadlineDays,
       };
     }
@@ -125,17 +112,9 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       documentTypeId: firstDocTypeId,
       originAreaId: firstAreaId,
       currentAreaId: firstAreaId,
-      senderDni: "",
-      senderName: "",
-      senderLastName: "",
-      senderEmail: "",
-      senderPhone: "",
-      senderAddress: "",
-      representation: "A Nombre Propio",
-      companyRuc: "",
-      companyName: "",
       subject: "",
       status: "Pending",
+      folios: 1,
       deadlineDays: 5,
     };
   };
@@ -154,22 +133,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
     }
   }, [isLoadingAreas, isLoadingDocTypes, areas, docTypes]);
 
-  // Effect to auto-fill sender information with logged-in user data
-  useEffect(() => {
-    if (user && !editMode) {
-      // Preenche automaticamente os campos de remetente com os dados do usuário logado
-      const [firstName, ...lastNameParts] = user.name?.split(' ') || ['', ''];
-      const lastName = lastNameParts.join(' ');
-      
-      form.setValue("senderName", firstName || '');
-      form.setValue("senderLastName", lastName || '');
-      
-      // Preenchendo outros campos se disponíveis no objeto usuário
-      if (user.username) {
-        form.setValue("senderDni", user.username);
-      }
-    }
-  }, [user, form, editMode]);
+  // Removed sender auto-fill effect
 
   // Mutation for creating or updating documents
   const mutation = useMutation({
@@ -230,26 +194,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
     },
   });
 
-  // Function to search employee by DNI
-  const searchEmployeeByDni = async (dni: string) => {
-    if (!dni || dni.length < 8) return;
-
-    try {
-      const response = await fetch(`/api/employees/dni/${dni}`, {
-        credentials: "include",
-      });
-      
-      if (response.ok) {
-        const employee = await response.json();
-        form.setValue("senderName", employee.firstName);
-        form.setValue("senderLastName", employee.lastName);
-        if (employee.email) form.setValue("senderEmail", employee.email);
-        if (employee.phone) form.setValue("senderPhone", employee.phone);
-      }
-    } catch (error) {
-      console.error("Error searching for employee:", error);
-    }
-  };
+  // Removed employee search function
 
   // Function to handle file selection
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -297,8 +242,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
     }
   };
 
-  // Watch representation type to show/hide company fields
-  const watchRepresentation = form.watch("representation");
+  // Removed representation type watch
   
   return (
     <Form {...form}>
@@ -537,211 +481,6 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
               </div>
             </CardContent>
           </Card>
-          </div>
-          
-          {/* Coluna da Direita - Informações do Remetente */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações do Remetente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="senderDni"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>DNI/CPF</FormLabel>
-                        <div className="flex items-center space-x-2">
-                          <FormControl className="flex-1">
-                            <Input
-                              {...field}
-                              placeholder="Digite o DNI/CPF do remetente"
-                              onBlur={() => searchEmployeeByDni(field.value)}
-                            />
-                          </FormControl>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => searchEmployeeByDni(field.value)}
-                          >
-                            Buscar
-                          </Button>
-                        </div>
-                        <FormDescription>
-                          Digite o DNI/CPF e clique em buscar para preencher automaticamente
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="senderName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Nome do remetente" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="senderLastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Sobrenome</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Sobrenome do remetente" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="senderEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>E-mail</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="email" 
-                            placeholder="E-mail do remetente" 
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="senderPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telefone</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Telefone do remetente"
-                            {...field}
-                            value={field.value || ''}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="senderAddress"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Endereço</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Endereço do remetente"
-                            onChange={field.onChange}
-                            onBlur={field.onBlur}
-                            value={field.value || ''} 
-                            disabled={field.disabled}
-                            name={field.name}
-                            ref={field.ref}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="representation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipo de Representação</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o tipo de representação" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="A Nombre Propio">Próprio</SelectItem>
-                            <SelectItem value="Representando a una Empresa">Representante Empresa</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {watchRepresentation === "Representando a una Empresa" && (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="companyRuc"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>CNPJ da Empresa</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="CNPJ da empresa"
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                value={field.value || ''} 
-                                disabled={field.disabled}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="companyName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome da Empresa</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="Nome da empresa"
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                value={field.value || ''} 
-                                disabled={field.disabled}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
 

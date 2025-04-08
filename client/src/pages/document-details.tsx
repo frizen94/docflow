@@ -330,63 +330,7 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
               </CardContent>
             </Card>
 
-            {/* Sender Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="h-5 w-5 mr-2" />
-                  Informações do Remetente
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">CPF</p>
-                      <p className="mt-1">{document.senderDni}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Nome Completo</p>
-                      <p className="mt-1">{`${document.senderName} ${document.senderLastName}`}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Telefone</p>
-                      <p className="mt-1">{document.senderPhone || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Email</p>
-                      <p className="mt-1">{document.senderEmail || "N/A"}</p>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Endereço</p>
-                    <p className="mt-1">{document.senderAddress || "N/A"}</p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Tipo de Representação</p>
-                    <p className="mt-1">{document.representation}</p>
-                  </div>
-                  
-                  {document.representation === "Persona Jurídica" && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">CNPJ</p>
-                        <p className="mt-1">{document.companyRuc || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Nome da Empresa</p>
-                        <p className="mt-1">{document.companyName || "N/A"}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+
           </div>
 
           {/* Actions */}
