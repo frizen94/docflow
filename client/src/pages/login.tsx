@@ -17,7 +17,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { FileText } from "lucide-react";
 
 // Schema for login form validation
@@ -56,7 +63,8 @@ export default function Login({ setUser }: LoginProps) {
     } catch (error) {
       toast({
         title: "Falha no login",
-        description: "Nome de usuário ou senha inválidos. Por favor, tente novamente.",
+        description:
+          "Nome de usuário ou senha inválidos. Por favor, tente novamente.",
         variant: "destructive",
       });
       console.error("Erro de login:", error);
@@ -73,9 +81,7 @@ export default function Login({ setUser }: LoginProps) {
             <FileText className="h-8 w-8" />
           </div>
           <CardTitle className="text-2xl font-bold">DocFlow</CardTitle>
-          <CardDescription>
-            Sistema de Gestão de Documentos
-          </CardDescription>
+          <CardDescription>Sistema de Gestão de Documentos</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -117,20 +123,14 @@ export default function Login({ setUser }: LoginProps) {
                 )}
               />
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex justify-center border-t pt-4">
-          <p className="text-sm text-gray-500">
-            Credenciais padrão de administrador: admin / admin123
-          </p>
+          <p className="text-sm text-gray-500"></p>
         </CardFooter>
       </Card>
     </div>
