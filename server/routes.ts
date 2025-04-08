@@ -18,6 +18,7 @@ import {
   insertDocumentTrackingSchema 
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { hashPassword, verifyPassword, isAdmin, isAuthenticated, hasAdminUser, createAdminUser } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize session
@@ -43,11 +44,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const user = await storage.getUserByUsername(username);
         if (!user) {
-          return done(null, false, { message: "Incorrect username" });
+          return done(null, false, { message: "Nome de usuário incorreto" });
         }
-        if (user.password !== password) {
-          return done(null, false, { message: "Incorrect password" });
+        
+        // Verifica se a senha corresponde usando bcrypt
+        const isPasswordValid = await verifyPassword(user.password, password);
+        if (!isPasswordValid) {
+          return done(null, false, { message: "Senha incorreta" });
         }
+        
         return done(null, user);
       } catch (error) {
         return done(error);
@@ -141,9 +146,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = insertUserSchema.parse(req.body);
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
-        return res.status(409).json({ error: "Username already exists" });
+        return res.status(409).json({ error: "Nome de usuário já existe" });
       }
-      const user = await storage.createUser(userData);
+      
+      // Cria hash da senha
+      const hashedPassword = await hashPassword(userData.password);
+      
+      const user = await storage.createUser({
+        ...userData,
+        password: hashedPassword
+      });
+      
       res.status(201).json(user);
     } catch (error) {
       handleValidationError(error, res);
@@ -154,9 +167,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = Number(req.params.id);
       const userData = insertUserSchema.partial().parse(req.body);
+      
+      // Se a senha estiver sendo atualizada, gere o hash dela
+      if (userData.password) {
+        userData.password = await hashPassword(userData.password);
+      }
+      
       const updatedUser = await storage.updateUser(id, userData);
       if (!updatedUser) {
-        return res.status(404).json({ error: "User not found" });
+        return res.status(404).json({ error: "Usuário não encontrado" });
       }
       res.json(updatedUser);
     } catch (error) {
@@ -680,6 +699,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Send the file
     res.sendFile(filePath);
+  });
+
+  // Rota para verificar se o sistema tem um administrador
+  app.get('/api/system/check', async (req, res) => {
+    try {
+      const hasAdmin = await hasAdminUser();
+      res.json({ hasAdmin });
+    } catch (error) {
+      console.error('Erro ao verificar administrador:', error);
+      res.status(500).json({ error: 'Erro ao verificar configuração do sistema' });
+    }
+  });
+
+  // Rota para registrar o primeiro administrador (só funciona se não houver administradores existentes)
+  app.post('/api/register/admin', async (req, res) => {
+    try {
+      // Verifica se já existe um administrador
+      const hasAdmin = await hasAdminUser();
+      if (hasAdmin) {
+        return res.status(403).json({ error: 'Um administrador já existe no sistema' });
+      }
+
+      const adminData = insertUserSchema.parse(req.body);
+      
+      // Garante que o usuário será um administrador
+      await createAdminUser(adminData);
+      
+      res.status(201).json({ success: true, message: 'Administrador criado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao criar administrador:', error);
+      handleValidationError(error, res);
+    }
+  });
+
+  // Rota para registrar um novo usuário (requer autenticação de administrador)
+  app.post('/api/register/user', isAdmin, async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Verifica se o nome de usuário já existe
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(409).json({ error: 'Nome de usuário já existe' });
+      }
+      
+      // Cria a senha com hash
+      const hashedPassword = await hashPassword(userData.password);
+      
+      // Cria o usuário
+      const user = await storage.createUser({
+        ...userData,
+        password: hashedPassword
+      });
+      
+      res.status(201).json({ success: true, userId: user.id });
+    } catch (error) {
+      console.error('Erro ao registrar usuário:', error);
+      handleValidationError(error, res);
+    }
   });
 
   const httpServer = createServer(app);

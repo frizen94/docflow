@@ -1,6 +1,5 @@
 import { Link, useLocation } from "wouter";
 import { User } from "@shared/schema";
-import { isAdmin } from "@/lib/auth";
 import {
   FileSignature,
   Users,
@@ -12,8 +11,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { logout } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SidebarProps {
   user: User;
@@ -24,18 +23,14 @@ interface SidebarProps {
 export default function Sidebar({ user, isOpen, closeSidebar }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { logoutMutation } = useAuth();
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setLocation("/login");
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Falha ao sair. Por favor, tente novamente.",
-        variant: "destructive",
-      });
-    }
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        setLocation("/auth");
+      }
+    });
   };
 
   const isActive = (path: string) => {
@@ -47,13 +42,13 @@ export default function Sidebar({ user, isOpen, closeSidebar }: SidebarProps) {
       name: "Painel de Controle",
       path: "/",
       icon: <Home className="mr-4 h-6 w-6" />,
-      roles: ["Administrator", "Secretary (a)"],
+      roles: ["Administrator", "Secretary"],
     },
     {
       name: "Documentos",
       path: "/documents",
       icon: <FileSignature className="mr-4 h-6 w-6" />,
-      roles: ["Administrator", "Secretary (a)"],
+      roles: ["Administrator", "Secretary"],
     },
     {
       name: "Funcionários",

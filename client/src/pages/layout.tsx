@@ -1,19 +1,24 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { User } from "@shared/schema";
 import Sidebar from "@/components/layout/sidebar";
 import Navbar from "@/components/layout/navbar";
+import { useAuth } from "@/hooks/use-auth";
 
 interface LayoutProps {
   children: React.ReactNode;
-  user: User;
 }
 
-export default function Layout({ children, user }: LayoutProps) {
+export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [location] = useLocation();
+  const { user } = useAuth();
 
-  // Function to get page title based on current route
+  // Garantir que temos um usuário
+  if (!user) {
+    return null; // O ProtectedRoute já deve lidar com isso, mas por segurança
+  }
+
+  // Função para obter o título da página com base na rota atual
   const getPageTitle = () => {
     switch (true) {
       case location === "/":
