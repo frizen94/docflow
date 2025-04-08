@@ -461,25 +461,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/documents", isAuthenticated, async (req, res) => {
     try {
-      const documentData = insertDocumentSchema.parse(req.body);
-      const document = await storage.createDocument(documentData);
-      res.status(201).json(document);
+      console.log("Received document data:", req.body);
+      
+      // Ajustar valores null para string vazia em campos opcionais de texto
+      const payload = { ...req.body };
+      ['senderEmail', 'senderPhone', 'senderAddress', 'companyRuc', 'companyName', 'filePath'].forEach(field => {
+        if (payload[field] === null || payload[field] === undefined) {
+          payload[field] = '';
+        }
+      });
+      
+      // Converter IDs para números
+      ['documentTypeId', 'originAreaId', 'currentAreaId', 'createdBy'].forEach(field => {
+        if (payload[field]) {
+          payload[field] = Number(payload[field]);
+        }
+      });
+      
+      // Se folios não for enviado, defina com valor 1
+      if (!payload.folios) {
+        payload.folios = 1;
+      }
+      
+      try {
+        const documentData = insertDocumentSchema.parse(payload);
+        console.log("Parsed document data:", documentData);
+        const document = await storage.createDocument(documentData);
+        console.log("Document created successfully:", document);
+        res.status(201).json(document);
+      } catch (validationError) {
+        console.error("Validation error:", validationError);
+        handleValidationError(validationError, res);
+      }
     } catch (error) {
-      handleValidationError(error, res);
+      console.error("Error creating document:", error);
+      res.status(500).json({ 
+        error: "Falha ao criar documento", 
+        details: error instanceof Error ? error.message : String(error) 
+      });
     }
   });
 
   app.put("/api/documents/:id", isAuthenticated, async (req, res) => {
     try {
+      console.log("Updating document data:", req.body);
       const id = Number(req.params.id);
-      const documentData = insertDocumentSchema.partial().parse(req.body);
-      const updatedDocument = await storage.updateDocument(id, documentData);
-      if (!updatedDocument) {
-        return res.status(404).json({ error: "Document not found" });
+      
+      // Ajustar valores null para string vazia em campos opcionais de texto
+      const payload = { ...req.body };
+      ['senderEmail', 'senderPhone', 'senderAddress', 'companyRuc', 'companyName', 'filePath'].forEach(field => {
+        if (payload[field] === null || payload[field] === undefined) {
+          payload[field] = '';
+        }
+      });
+      
+      // Converter IDs para números
+      ['documentTypeId', 'originAreaId', 'currentAreaId', 'currentEmployeeId'].forEach(field => {
+        if (payload[field]) {
+          payload[field] = Number(payload[field]);
+        }
+      });
+      
+      try {
+        const documentData = insertDocumentSchema.partial().parse(payload);
+        console.log("Parsed document update data:", documentData);
+        const updatedDocument = await storage.updateDocument(id, documentData);
+        
+        if (!updatedDocument) {
+          return res.status(404).json({ error: "Documento não encontrado" });
+        }
+        
+        console.log("Document updated successfully:", updatedDocument);
+        res.json(updatedDocument);
+      } catch (validationError) {
+        console.error("Validation error in document update:", validationError);
+        handleValidationError(validationError, res);
       }
-      res.json(updatedDocument);
     } catch (error) {
-      handleValidationError(error, res);
+      console.error("Error updating document:", error);
+      res.status(500).json({ 
+        error: "Falha ao atualizar documento", 
+        details: error instanceof Error ? error.message : String(error) 
+      });
     }
   });
 

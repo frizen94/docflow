@@ -42,6 +42,13 @@ const documentFormSchema = insertDocumentSchema
     deadlineDays: z.number().int().min(1, {
       message: "O prazo deve ser de pelo menos 1 dia",
     }).optional(),
+    // Garantir que campos opcionais sejam strings vazias em vez de null/undefined
+    senderEmail: z.string().optional().transform(val => val || ''),
+    senderPhone: z.string().optional().transform(val => val || ''),
+    senderAddress: z.string().optional().transform(val => val || ''),
+    companyRuc: z.string().optional().transform(val => val || ''),
+    companyName: z.string().optional().transform(val => val || ''),
+    filePath: z.string().optional().transform(val => val || ''),
   })
   .omit({ trackingNumber: true, deadline: true });
 
@@ -447,6 +454,30 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
 
                 <FormField
                   control={form.control}
+                  name="folios"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de Folhas</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          placeholder="Número de folhas do documento"
+                          {...field}
+                          value={field.value || 1}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 1)}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Informe o número de folhas físicas do documento
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="deadlineDays"
                   render={({ field }) => (
                     <FormItem>
@@ -587,12 +618,8 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                           <Input 
                             type="email" 
                             placeholder="E-mail do remetente" 
-                            onChange={field.onChange}
-                            onBlur={field.onBlur}
-                            value={field.value || ''} 
-                            disabled={field.disabled}
-                            name={field.name}
-                            ref={field.ref}
+                            {...field}
+                            value={field.value || ''}
                           />
                         </FormControl>
                         <FormMessage />
@@ -609,12 +636,8 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                         <FormControl>
                           <Input 
                             placeholder="Telefone do remetente"
-                            onChange={field.onChange}
-                            onBlur={field.onBlur}
-                            value={field.value || ''} 
-                            disabled={field.disabled}
-                            name={field.name}
-                            ref={field.ref}
+                            {...field}
+                            value={field.value || ''}
                           />
                         </FormControl>
                         <FormMessage />
