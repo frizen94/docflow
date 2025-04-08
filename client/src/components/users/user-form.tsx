@@ -63,7 +63,7 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
     password: "", // Don't pre-fill password
     confirmPassword: "",
     name: user?.name || "",
-    role: user?.role || "Secretary (a)",
+    role: user?.role || "Usuário",
     status: user?.status ?? true,
   };
 
@@ -79,23 +79,21 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
       // Remove confirmPassword before sending to API
       const { confirmPassword, ...userData } = values;
       
-      // Remove password if it's empty and we're editing a user
-      if (editMode && !userData.password) {
-        delete userData.password;
-      }
+      // Handle password for edits
+      let dataToSend = userData;
       
       if (editMode && user) {
-        const res = await apiRequest("PUT", `/api/users/${user.id}`, userData);
+        const res = await apiRequest("PUT", `/api/users/${user.id}`, dataToSend);
         return res.json();
       } else {
-        const res = await apiRequest("POST", "/api/users", userData);
+        const res = await apiRequest("POST", "/api/users", dataToSend);
         return res.json();
       }
     },
     onSuccess: () => {
       toast({
-        title: `User ${editMode ? "updated" : "created"}`,
-        description: `The user has been ${editMode ? "updated" : "created"} successfully.`,
+        title: `Usuário ${editMode ? "atualizado" : "criado"}`,
+        description: `O usuário foi ${editMode ? "atualizado" : "criado"} com sucesso.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       onClose();
@@ -103,8 +101,8 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to ${editMode ? "update" : "create"} user: ${error}`,
+        title: "Erro",
+        description: `Falha ao ${editMode ? "atualizar" : "criar"} usuário: ${error}`,
         variant: "destructive",
       });
     },
@@ -119,7 +117,7 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{editMode ? "Edit User" : "Add New User"}</DialogTitle>
+          <DialogTitle>{editMode ? "Editar Usuário" : "Adicionar Novo Usuário"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -128,11 +126,11 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Nome de Usuário</FormLabel>
                   <FormControl>
                     <Input 
                       {...field} 
-                      placeholder="Enter username" 
+                      placeholder="Digite o nome de usuário" 
                       disabled={editMode}
                     />
                   </FormControl>
@@ -146,9 +144,9 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>Nome Completo</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter full name" />
+                    <Input {...field} placeholder="Digite o nome completo" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -161,12 +159,12 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{editMode ? "New Password (leave blank to keep current)" : "Password"}</FormLabel>
+                    <FormLabel>{editMode ? "Nova Senha (deixe em branco para manter atual)" : "Senha"}</FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
                         type="password" 
-                        placeholder={editMode ? "Enter new password" : "Enter password"} 
+                        placeholder={editMode ? "Digite a nova senha" : "Digite a senha"} 
                       />
                     </FormControl>
                     <FormMessage />
@@ -179,12 +177,12 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel>Confirmar Senha</FormLabel>
                     <FormControl>
                       <Input 
                         {...field} 
                         type="password" 
-                        placeholder="Confirm password" 
+                        placeholder="Confirme a senha" 
                       />
                     </FormControl>
                     <FormMessage />
@@ -198,19 +196,19 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>Perfil</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
+                        <SelectValue placeholder="Selecione um perfil" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Administrator">Administrator</SelectItem>
-                      <SelectItem value="Secretary (a)">Secretary (a)</SelectItem>
+                      <SelectItem value="Administrator">Administrador</SelectItem>
+                      <SelectItem value="Usuário">Usuário</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -225,7 +223,7 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
                     <FormLabel>Status</FormLabel>
-                    <FormDescription>Activate or deactivate this user</FormDescription>
+                    <FormDescription>Ativar ou desativar este usuário</FormDescription>
                   </div>
                   <FormControl>
                     <Switch
@@ -243,13 +241,13 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                 variant="outline"
                 onClick={onClose}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={mutation.isPending}
               >
-                {mutation.isPending ? "Saving..." : editMode ? "Update" : "Save"}
+                {mutation.isPending ? "Salvando..." : editMode ? "Atualizar" : "Salvar"}
               </Button>
             </DialogFooter>
           </form>

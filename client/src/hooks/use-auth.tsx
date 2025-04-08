@@ -30,7 +30,7 @@ type RegisterData = {
   username: string;
   password: string;
   name: string;
-  role: "Administrator" | "Secretary";
+  role: "Administrator" | "Usuário";
 };
 
 // Criar o contexto de autenticação

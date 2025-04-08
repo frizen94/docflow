@@ -48,8 +48,8 @@ export default function UserTable({ onEdit }: UserTableProps) {
     },
     onSuccess: () => {
       toast({
-        title: "User deleted",
-        description: "The user has been deleted successfully.",
+        title: "Usuário excluído",
+        description: "O usuário foi excluído com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setDeleteDialogOpen(false);
@@ -57,8 +57,8 @@ export default function UserTable({ onEdit }: UserTableProps) {
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to delete user: ${error}`,
+        title: "Erro",
+        description: `Falha ao excluir usuário: ${error}`,
         variant: "destructive",
       });
     },
@@ -82,12 +82,12 @@ export default function UserTable({ onEdit }: UserTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
+              <TableHead>Nome de Usuário</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>Perfil</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Data de Criação</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,7 +137,7 @@ export default function UserTable({ onEdit }: UserTableProps) {
                           : "bg-red-100 text-red-800"
                       }
                     >
-                      {user.status ? "Active" : "Inactive"}
+                      {user.status ? "Ativo" : "Inativo"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -151,7 +151,7 @@ export default function UserTable({ onEdit }: UserTableProps) {
                         onClick={() => onEdit(user)}
                       >
                         <Pencil className="h-4 w-4 mr-1" />
-                        Edit
+                        Editar
                       </Button>
                       <Button
                         variant="outline"
@@ -161,7 +161,7 @@ export default function UserTable({ onEdit }: UserTableProps) {
                         disabled={user.id === 1} // Prevent deleting admin user
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
+                        Excluir
                       </Button>
                     </div>
                   </TableCell>
@@ -170,7 +170,7 @@ export default function UserTable({ onEdit }: UserTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10 text-gray-500">
-                  No users found
+                  Nenhum usuário encontrado
                 </TableCell>
               </TableRow>
             )}
@@ -182,19 +182,19 @@ export default function UserTable({ onEdit }: UserTableProps) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the user "{userToDelete?.name}". This action cannot be
-              undone.
+              Isso excluirá permanentemente o usuário "{userToDelete?.name}". Esta ação não pode ser
+              desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-red-500 hover:bg-red-600"
             >
-              Delete
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

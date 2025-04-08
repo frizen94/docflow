@@ -42,13 +42,13 @@ export default function Sidebar({ user, isOpen, closeSidebar }: SidebarProps) {
       name: "Painel de Controle",
       path: "/",
       icon: <Home className="mr-4 h-6 w-6" />,
-      roles: ["Administrator", "Secretary"],
+      roles: ["Administrator", "Usuário"],
     },
     {
       name: "Documentos",
       path: "/documents",
       icon: <FileSignature className="mr-4 h-6 w-6" />,
-      roles: ["Administrator", "Secretary"],
+      roles: ["Administrator", "Usuário"],
     },
     {
       name: "Funcionários",
