@@ -31,8 +31,8 @@ export default function Sidebar({ user, isOpen, closeSidebar }: SidebarProps) {
       setLocation("/login");
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to log out. Please try again.",
+        title: "Erro",
+        description: "Falha ao sair. Por favor, tente novamente.",
         variant: "destructive",
       });
     }
@@ -44,37 +44,37 @@ export default function Sidebar({ user, isOpen, closeSidebar }: SidebarProps) {
 
   const menuItems = [
     {
-      name: "Dashboard",
+      name: "Painel de Controle",
       path: "/",
       icon: <Home className="mr-4 h-6 w-6" />,
       roles: ["Administrator", "Secretary (a)"],
     },
     {
-      name: "Documents",
+      name: "Documentos",
       path: "/documents",
       icon: <FileSignature className="mr-4 h-6 w-6" />,
       roles: ["Administrator", "Secretary (a)"],
     },
     {
-      name: "Employees",
+      name: "Funcionários",
       path: "/employees",
       icon: <Users className="mr-4 h-6 w-6" />,
       roles: ["Administrator"],
     },
     {
-      name: "Areas",
+      name: "Áreas",
       path: "/areas",
       icon: <FolderOpen className="mr-4 h-6 w-6" />,
       roles: ["Administrator"],
     },
     {
-      name: "Doc Types",
+      name: "Tipos de Doc",
       path: "/document-types",
       icon: <FileText className="mr-4 h-6 w-6" />,
       roles: ["Administrator"],
     },
     {
-      name: "Users",
+      name: "Usuários",
       path: "/users",
       icon: <UserRound className="mr-4 h-6 w-6" />,
       roles: ["Administrator"],
@@ -157,7 +157,7 @@ export default function Sidebar({ user, isOpen, closeSidebar }: SidebarProps) {
             onClick={handleLogout}
           >
             <LogOut className="h-5 w-5 mr-3" />
-            <span>Logout</span>
+            <span>Sair</span>
           </Button>
         </div>
       </div>

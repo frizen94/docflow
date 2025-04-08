@@ -21,15 +21,15 @@ export default function UpcomingDeadlines() {
   // Function to get appropriate badge text based on days remaining
   const getBadgeText = (deadline: Date) => {
     const daysRemaining = differenceInDays(new Date(deadline), new Date());
-    if (daysRemaining <= 0) return "Today";
-    if (daysRemaining === 1) return "Tomorrow";
-    return `${daysRemaining} days`;
+    if (daysRemaining <= 0) return "Hoje";
+    if (daysRemaining === 1) return "Amanhã";
+    return `${daysRemaining} dias`;
   };
 
   return (
     <Card>
       <CardHeader className="border-b border-gray-200">
-        <CardTitle className="text-lg font-medium text-gray-900">Upcoming Deadlines</CardTitle>
+        <CardTitle className="text-lg font-medium text-gray-900">Prazos Próximos</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
         <ul className="divide-y divide-gray-200">
@@ -60,7 +60,7 @@ export default function UpcomingDeadlines() {
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {doc.subject}
                     </p>
-                    <p className="text-sm text-gray-500">Area ID: {doc.currentAreaId}</p>
+                    <p className="text-sm text-gray-500">Área ID: {doc.currentAreaId}</p>
                   </div>
                   <div>
                     {doc.deadline && (
@@ -77,7 +77,7 @@ export default function UpcomingDeadlines() {
               </li>
             ))
           ) : (
-            <li className="py-4 text-center text-gray-500">No upcoming deadlines</li>
+            <li className="py-4 text-center text-gray-500">Nenhum prazo próximo</li>
           )}
         </ul>
       </CardContent>
@@ -85,7 +85,7 @@ export default function UpcomingDeadlines() {
         <div className="text-sm">
           <Link href="/documents">
             <a className="font-medium text-primary-600 hover:text-primary-500">
-              View all deadlines
+              Ver todos os prazos
             </a>
           </Link>
         </div>

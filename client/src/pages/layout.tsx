@@ -17,21 +17,21 @@ export default function Layout({ children, user }: LayoutProps) {
   const getPageTitle = () => {
     switch (true) {
       case location === "/":
-        return "Dashboard";
+        return "Painel de Controle";
       case location === "/documents":
-        return "Documents";
+        return "Documentos";
       case location.startsWith("/documents/new"):
-        return "New Document";
+        return "Novo Documento";
       case location.startsWith("/documents/"):
-        return "Document Details";
+        return "Detalhes do Documento";
       case location === "/areas":
-        return "Areas";
+        return "Áreas";
       case location === "/document-types":
-        return "Document Types";
+        return "Tipos de Documento";
       case location === "/employees":
-        return "Employees";
+        return "Funcionários";
       case location === "/users":
-        return "Users";
+        return "Usuários";
       default:
         return "DocFlow";
     }

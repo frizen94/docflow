@@ -21,7 +21,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Painel de Controle</h1>
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -46,35 +46,35 @@ export default function Dashboard() {
         ) : (
           <>
             <StatsCard
-              title="Total Documents"
+              title="Total de Documentos"
               value={stats?.totalDocuments || 0}
               icon={FileSignature}
               color="primary"
-              linkText="View all documents"
+              linkText="Ver todos os documentos"
               linkHref="/documents"
             />
             <StatsCard
-              title="Completed Documents"
+              title="Documentos Concluídos"
               value={stats?.completedDocuments || 0}
               icon={CheckCircle}
               color="success"
-              linkText="View completed"
+              linkText="Ver concluídos"
               linkHref="/documents?status=Completed"
             />
             <StatsCard
-              title="Deadline Approaching"
+              title="Prazos se Aproximando"
               value={stats?.approachingDeadline || 0}
               icon={Clock}
               color="warning"
-              linkText="View urgent"
+              linkText="Ver urgentes"
               linkHref="/documents?urgent=true"
             />
             <StatsCard
-              title="Total Users"
+              title="Total de Usuários"
               value={stats?.totalUsers || 0}
               icon={Users}
               color="secondary"
-              linkText="View all users"
+              linkText="Ver todos os usuários"
               linkHref="/users"
             />
           </>

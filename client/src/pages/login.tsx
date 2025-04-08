@@ -22,8 +22,8 @@ import { FileText } from "lucide-react";
 
 // Schema for login form validation
 const loginFormSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
+  username: z.string().min(1, "Nome de usuário é obrigatório"),
+  password: z.string().min(1, "Senha é obrigatória"),
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
@@ -55,11 +55,11 @@ export default function Login({ setUser }: LoginProps) {
       setLocation("/");
     } catch (error) {
       toast({
-        title: "Login failed",
-        description: "Invalid username or password. Please try again.",
+        title: "Falha no login",
+        description: "Nome de usuário ou senha inválidos. Por favor, tente novamente.",
         variant: "destructive",
       });
-      console.error("Login error:", error);
+      console.error("Erro de login:", error);
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +74,7 @@ export default function Login({ setUser }: LoginProps) {
           </div>
           <CardTitle className="text-2xl font-bold">DocFlow</CardTitle>
           <CardDescription>
-            Document Management System
+            Sistema de Gestão de Documentos
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -85,11 +85,11 @@ export default function Login({ setUser }: LoginProps) {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Nome de Usuário</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="Enter your username"
+                        placeholder="Digite seu nome de usuário"
                         disabled={isLoading}
                       />
                     </FormControl>
@@ -103,12 +103,12 @@ export default function Login({ setUser }: LoginProps) {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Senha</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder="Digite sua senha"
                         disabled={isLoading}
                       />
                     </FormControl>
@@ -122,14 +122,14 @@ export default function Login({ setUser }: LoginProps) {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex justify-center border-t pt-4">
           <p className="text-sm text-gray-500">
-            Default admin credentials: admin / admin123
+            Credenciais padrão de administrador: admin / admin123
           </p>
         </CardFooter>
       </Card>

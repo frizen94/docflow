@@ -57,7 +57,7 @@ export default function Navbar({ title, user, openSidebar }: NavbarProps) {
                 size="icon"
                 className="flex items-center max-w-xs text-sm rounded-full text-gray-500 hover:text-gray-600 focus:outline-none focus:text-gray-600"
               >
-                <span className="sr-only">Open user menu</span>
+                <span className="sr-only">Abrir menu do usuário</span>
                 <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
                   {user.name.charAt(0)}
                 </div>

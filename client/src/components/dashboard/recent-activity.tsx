@@ -17,7 +17,7 @@ export default function RecentActivity({ limit = 3 }: RecentActivityProps) {
   return (
     <Card>
       <CardHeader className="border-b border-gray-200">
-        <CardTitle className="text-lg font-medium text-gray-900">Recent Activity</CardTitle>
+        <CardTitle className="text-lg font-medium text-gray-900">Atividades Recentes</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
         <ul className="divide-y divide-gray-200">
@@ -48,28 +48,28 @@ export default function RecentActivity({ limit = 3 }: RecentActivityProps) {
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium">
                         {activity.id % 3 === 0
-                          ? "John Doe"
+                          ? "João Silva"
                           : activity.id % 2 === 0
-                          ? "Sarah Johnson"
-                          : "Michael Wilson"}
+                          ? "Sara Oliveira"
+                          : "Miguel Costa"}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        {format(new Date(activity.createdAt), "h'h' ago")}
+                        {format(new Date(activity.createdAt), "h'h' atrás")}
                       </p>
                     </div>
                     <p className="text-sm text-gray-500">
-                      {activity.description || "Processed document"}{" "}
+                      {activity.description || "Processou documento"}{" "}
                       <span className="font-medium text-gray-900">
-                        Document #{activity.documentId}
+                        Documento #{activity.documentId}
                       </span>{" "}
-                      from Area #{activity.fromAreaId} to Area #{activity.toAreaId}
+                      da Área #{activity.fromAreaId} para Área #{activity.toAreaId}
                     </p>
                   </div>
                 </div>
               </li>
             ))
           ) : (
-            <li className="py-4 text-center text-gray-500">No recent activities</li>
+            <li className="py-4 text-center text-gray-500">Nenhuma atividade recente</li>
           )}
         </ul>
       </CardContent>
@@ -77,7 +77,7 @@ export default function RecentActivity({ limit = 3 }: RecentActivityProps) {
         <div className="text-sm">
           <Link href="/documents">
             <a className="font-medium text-primary-600 hover:text-primary-500">
-              View all activity
+              Ver todas as atividades
             </a>
           </Link>
         </div>
