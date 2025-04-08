@@ -40,7 +40,7 @@ const documentFormSchema = insertDocumentSchema
   .extend({
     deadlineDays: z.number().int().min(1, {
       message: "O prazo deve ser de pelo menos 1 dia",
-    }),
+    }).optional(),
   })
   .omit({ trackingNumber: true, deadline: true });
 
@@ -138,12 +138,16 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
             .padStart(3, "0")}`
         : "";
             
-      // Calculate deadline date based on deadlineDays
-      const deadlineDate = addDays(new Date(), values.deadlineDays);
+      // Calculate deadline date based on deadlineDays if provided
+      let deadline = null;
+      if (values.deadlineDays !== undefined && values.deadlineDays !== null) {
+        const deadlineDate = addDays(new Date(), values.deadlineDays);
+        deadline = deadlineDate.toISOString();
+      }
       
       const payload = {
         ...values,
-        deadline: deadlineDate.toISOString(),
+        ...(deadline ? { deadline } : {}),
         createdBy: 1, // Default to first user
         documentTypeId: Number(values.documentTypeId),
         originAreaId: Number(values.originAreaId),
@@ -152,7 +156,9 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       };
       
       // Remove deadlineDays from the payload as it's not in the schema
-      delete payload.deadlineDays;
+      if ('deadlineDays' in payload) {
+        delete (payload as any).deadlineDays;
+      }
 
       if (editMode && documentId) {
         const res = await apiRequest("PUT", `/api/documents/${documentId}`, payload);
@@ -165,17 +171,17 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
       toast({
-        title: `Document ${editMode ? "updated" : "created"} successfully`,
-        description: `The document has been ${
-          editMode ? "updated" : "created"
-        } successfully.`,
+        title: `Documento ${editMode ? "atualizado" : "cadastrado"} com sucesso`,
+        description: `O documento foi ${
+          editMode ? "atualizado" : "cadastrado"
+        } com sucesso.`,
       });
       setLocation("/documents");
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to ${editMode ? "update" : "create"} document. ${error}`,
+        title: "Erro",
+        description: `Falha ao ${editMode ? "atualizar" : "cadastrar"} o documento. ${error}`,
         variant: "destructive",
       });
     },
@@ -237,8 +243,8 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
         .catch(error => {
           console.error("Error uploading file:", error);
           toast({
-            title: "Error uploading file",
-            description: "There was an error uploading the file. Please try again.",
+            title: "Erro ao enviar arquivo",
+            description: "Ocorreu um erro ao enviar o arquivo. Por favor, tente novamente.",
             variant: "destructive",
           });
         });
@@ -262,6 +268,48 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="documentNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número do Documento</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Digite o número do documento" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="documentTypeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Documento</FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        defaultValue={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de documento" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {docTypes?.map((type) => (
+                            <SelectItem key={type.id} value={type.id.toString()}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="originAreaId"
@@ -313,48 +361,6 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="documentTypeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Documento</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo de documento" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {docTypes?.map((type) => (
-                            <SelectItem key={type.id} value={type.id.toString()}>
-                              {type.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="documentNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Número do Documento</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Digite o número do documento" />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -444,7 +450,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
         <div className="flex justify-center">
           <Button
             type="submit"
-            className="bg-success-600 hover:bg-success-700 text-lg px-8 py-2"
+            className="bg-success-600 hover:bg-success-700 text-lg font-semibold px-10 py-3 rounded-md"
             disabled={mutation.isPending}
           >
             {mutation.isPending ? "Salvando..." : editMode ? "Atualizar Documento" : "Cadastrar Documento"}
