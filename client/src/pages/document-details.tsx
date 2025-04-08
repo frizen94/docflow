@@ -340,14 +340,14 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                       <p className="mt-1">{document.senderDni}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Full Name</p>
+                      <p className="text-sm font-medium text-gray-500">Nome Completo</p>
                       <p className="mt-1">{`${document.senderName} ${document.senderLastName}`}</p>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Phone</p>
+                      <p className="text-sm font-medium text-gray-500">Telefone</p>
                       <p className="mt-1">{document.senderPhone || "N/A"}</p>
                     </div>
                     <div>
@@ -357,23 +357,23 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                   </div>
                   
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Address</p>
+                    <p className="text-sm font-medium text-gray-500">Endereço</p>
                     <p className="mt-1">{document.senderAddress || "N/A"}</p>
                   </div>
                   
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Representation Type</p>
+                    <p className="text-sm font-medium text-gray-500">Tipo de Representação</p>
                     <p className="mt-1">{document.representation}</p>
                   </div>
                   
                   {document.representation === "Persona Jurídica" && (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm font-medium text-gray-500">RUC</p>
+                        <p className="text-sm font-medium text-gray-500">CNPJ</p>
                         <p className="mt-1">{document.companyRuc || "N/A"}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-500">Company Name</p>
+                        <p className="text-sm font-medium text-gray-500">Nome da Empresa</p>
                         <p className="mt-1">{document.companyName || "N/A"}</p>
                       </div>
                     </div>
@@ -407,7 +407,7 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select destination area" />
+                                <SelectValue placeholder="Selecione a área de destino" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -428,11 +428,11 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description (Optional)</FormLabel>
+                          <FormLabel>Descrição (Opcional)</FormLabel>
                           <FormControl>
                             <Textarea
                               {...field}
-                              placeholder="Add description about this transfer..."
+                              placeholder="Adicione uma descrição sobre esta transferência..."
                               rows={3}
                             />
                           </FormControl>
@@ -445,7 +445,7 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                       type="submit"
                       disabled={trackingMutation.isPending || document.status === "Completed"}
                     >
-                      {trackingMutation.isPending ? "Transferring..." : "Transfer Document"}
+                      {trackingMutation.isPending ? "Transferindo..." : "Encaminhar Documento"}
                     </Button>
                   </form>
                 </Form>
@@ -515,7 +515,7 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
         </>
       ) : (
         <div className="text-center py-10">
-          <p className="text-gray-500">Document not found</p>
+          <p className="text-gray-500">Documento não encontrado</p>
         </div>
       )}
     </div>

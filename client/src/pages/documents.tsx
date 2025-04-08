@@ -27,7 +27,7 @@ export default function Documents() {
         <h1 className="text-2xl font-bold tracking-tight mb-4 sm:mb-0">Documentos</h1>
         <Button onClick={() => setLocation("/documents/new")}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Novo Documento
+          Cadastrar
         </Button>
       </div>
 
