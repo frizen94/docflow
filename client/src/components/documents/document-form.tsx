@@ -38,11 +38,11 @@ import { format, addDays } from "date-fns";
 // Extended schema for form validation
 const documentFormSchema = insertDocumentSchema
   .extend({
-    confirmCheck: z.boolean().refine((val) => val === true, {
-      message: "You must confirm the information is correct",
+    deadlineDays: z.number().int().min(1, {
+      message: "O prazo deve ser de pelo menos 1 dia",
     }),
   })
-  .omit({ trackingNumber: true });
+  .omit({ trackingNumber: true, deadline: true });
 
 type DocumentFormValues = z.infer<typeof documentFormSchema>;
 
@@ -70,13 +70,23 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
 
   // Fetch document data if in edit mode
   const { data: document, isLoading: isLoadingDocument } = useQuery<Document>({
-    queryKey: editMode && documentId ? [`/api/documents/${documentId}`] : null,
+    queryKey: [`/api/documents/${documentId || ''}`],
     enabled: editMode && !!documentId,
   });
 
   // Generate default values for form
   const getDefaultValues = (): Partial<DocumentFormValues> => {
     if (editMode && document) {
+      // Calculate days between now and deadline if exists
+      let deadlineDays = 5; // Default 5 days
+      if (document.deadline) {
+        const deadlineDate = new Date(document.deadline);
+        const today = new Date();
+        const diffTime = Math.abs(deadlineDate.getTime() - today.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        deadlineDays = diffDays > 0 ? diffDays : 5;
+      }
+      
       return {
         documentNumber: document.documentNumber,
         documentTypeId: document.documentTypeId,
@@ -93,11 +103,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
         currentAreaId: document.currentAreaId,
         status: document.status,
         subject: document.subject,
-        folios: document.folios,
-        deadline: document.deadline
-          ? format(new Date(document.deadline), "yyyy-MM-dd")
-          : "",
-        confirmCheck: true,
+        deadlineDays: deadlineDays,
       };
     }
 
@@ -111,9 +117,8 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       senderAddress: "",
       representation: "A Nombre Propio",
       subject: "",
-      folios: 1,
       status: "Pending",
-      confirmCheck: false,
+      deadlineDays: 5,
     };
   };
 
@@ -132,21 +137,22 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
             .toString()
             .padStart(3, "0")}`
         : "";
-
+            
+      // Calculate deadline date based on deadlineDays
+      const deadlineDate = addDays(new Date(), values.deadlineDays);
+      
       const payload = {
         ...values,
-        ...(values.deadline
-          ? { deadline: new Date(values.deadline).toISOString() }
-          : {}),
+        deadline: deadlineDate.toISOString(),
         createdBy: 1, // Default to first user
-        folios: Number(values.folios),
         documentTypeId: Number(values.documentTypeId),
         originAreaId: Number(values.originAreaId),
         currentAreaId: Number(values.currentAreaId),
         ...(trackingNumber ? { trackingNumber } : {}),
       };
-
-      delete payload.confirmCheck;
+      
+      // Remove deadlineDays from the payload as it's not in the schema
+      delete payload.deadlineDays;
 
       if (editMode && documentId) {
         const res = await apiRequest("PUT", `/api/documents/${documentId}`, payload);
@@ -372,66 +378,25 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="folios"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Número de Folhas</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            min={1}
-                            placeholder="Digite o número de folhas"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="deadline"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Prazo</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="date"
-                            min={format(new Date(), "yyyy-MM-dd")}
-                            placeholder="Selecione a data de prazo"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
                 <FormField
                   control={form.control}
-                  name="confirmCheck"
+                  name="deadlineDays"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-6">
+                    <FormItem>
+                      <FormLabel>Prazo em Dias</FormLabel>
                       <FormControl>
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 text-primary-600 focus:ring-primary-500 rounded"
-                          checked={field.value}
-                          onChange={field.onChange}
+                        <Input
+                          {...field}
+                          type="number"
+                          min={1}
+                          placeholder="Digite o número de dias para o prazo"
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Declaro sob as penas da lei que todas as informações
-                          fornecidas são corretas e verdadeiras.
-                        </FormLabel>
-                        <FormMessage />
-                      </div>
+                      <FormDescription>
+                        Data final calculada: {format(addDays(new Date(), field.value || 0), "dd/MM/yyyy")}
+                      </FormDescription>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
