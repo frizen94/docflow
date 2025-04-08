@@ -8,6 +8,7 @@ import { insertDocumentSchema } from "@shared/schema";
 import { Area, DocumentType, Document } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { Paperclip, Upload } from "lucide-react";
 
 import {
@@ -55,6 +56,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
   const [representationType, setRepresentationType] = useState("A Nombre Propio");
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -88,21 +90,21 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       }
       
       return {
-        documentNumber: document.documentNumber,
+        documentNumber: document.documentNumber || "",
         documentTypeId: document.documentTypeId,
-        senderDni: document.senderDni,
-        senderName: document.senderName,
-        senderLastName: document.senderLastName,
+        senderDni: document.senderDni || "",
+        senderName: document.senderName || "",
+        senderLastName: document.senderLastName || "",
         senderEmail: document.senderEmail || "",
         senderPhone: document.senderPhone || "",
         senderAddress: document.senderAddress || "",
-        representation: document.representation,
+        representation: document.representation || "A Nombre Propio",
         companyRuc: document.companyRuc || "",
         companyName: document.companyName || "",
         originAreaId: document.originAreaId,
         currentAreaId: document.currentAreaId,
-        status: document.status,
-        subject: document.subject,
+        status: document.status || "Pending",
+        subject: document.subject || "",
         deadlineDays: deadlineDays,
       };
     }
@@ -123,6 +125,8 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       senderPhone: "",
       senderAddress: "",
       representation: "A Nombre Propio",
+      companyRuc: "",
+      companyName: "",
       subject: "",
       status: "Pending",
       deadlineDays: 5,
@@ -142,6 +146,23 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       form.reset(getDefaultValues());
     }
   }, [isLoadingAreas, isLoadingDocTypes, areas, docTypes]);
+
+  // Effect to auto-fill sender information with logged-in user data
+  useEffect(() => {
+    if (user && !editMode) {
+      // Preenche automaticamente os campos de remetente com os dados do usuário logado
+      const [firstName, ...lastNameParts] = user.name?.split(' ') || ['', ''];
+      const lastName = lastNameParts.join(' ');
+      
+      form.setValue("senderName", firstName || '');
+      form.setValue("senderLastName", lastName || '');
+      
+      // Preenchendo outros campos se disponíveis no objeto usuário
+      if (user.username) {
+        form.setValue("senderDni", user.username);
+      }
+    }
+  }, [user, form, editMode]);
 
   // Mutation for creating or updating documents
   const mutation = useMutation({
@@ -163,7 +184,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       const payload = {
         ...values,
         ...(deadline ? { deadline } : {}),
-        createdBy: 1, // Default to first user
+        createdBy: user?.id || 1, // Usa o ID do usuário logado
         documentTypeId: Number(values.documentTypeId),
         originAreaId: Number(values.originAreaId),
         currentAreaId: Number(values.currentAreaId),
@@ -563,7 +584,16 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                       <FormItem>
                         <FormLabel>E-mail</FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" placeholder="E-mail do remetente" />
+                          <Input 
+                            type="email" 
+                            placeholder="E-mail do remetente" 
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            value={field.value || ''} 
+                            disabled={field.disabled}
+                            name={field.name}
+                            ref={field.ref}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -577,7 +607,15 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                       <FormItem>
                         <FormLabel>Telefone</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Telefone do remetente" />
+                          <Input 
+                            placeholder="Telefone do remetente"
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            value={field.value || ''} 
+                            disabled={field.disabled}
+                            name={field.name}
+                            ref={field.ref}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -591,7 +629,15 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                       <FormItem>
                         <FormLabel>Endereço</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Endereço do remetente" />
+                          <Input 
+                            placeholder="Endereço do remetente"
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            value={field.value || ''} 
+                            disabled={field.disabled}
+                            name={field.name}
+                            ref={field.ref}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -632,7 +678,15 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                           <FormItem>
                             <FormLabel>CNPJ da Empresa</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="CNPJ da empresa" />
+                              <Input 
+                                placeholder="CNPJ da empresa"
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                value={field.value || ''} 
+                                disabled={field.disabled}
+                                name={field.name}
+                                ref={field.ref}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -646,7 +700,15 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
                           <FormItem>
                             <FormLabel>Nome da Empresa</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="Nome da empresa" />
+                              <Input 
+                                placeholder="Nome da empresa"
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                value={field.value || ''} 
+                                disabled={field.disabled}
+                                name={field.name}
+                                ref={field.ref}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
