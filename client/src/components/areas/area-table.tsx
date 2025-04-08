@@ -48,8 +48,8 @@ export default function AreaTable({ onEdit }: AreaTableProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Area deleted",
-        description: "The area has been deleted successfully.",
+        title: "Área excluída",
+        description: "A área foi excluída com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/areas"] });
       setDeleteDialogOpen(false);
@@ -57,8 +57,8 @@ export default function AreaTable({ onEdit }: AreaTableProps) {
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to delete area: ${error}`,
+        title: "Erro",
+        description: `Falha ao excluir área: ${error}`,
         variant: "destructive",
       });
     },
@@ -82,10 +82,10 @@ export default function AreaTable({ onEdit }: AreaTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>#</TableHead>
-              <TableHead>Area</TableHead>
-              <TableHead>Registration Date</TableHead>
+              <TableHead>Área</TableHead>
+              <TableHead>Data de Registro</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -130,7 +130,7 @@ export default function AreaTable({ onEdit }: AreaTableProps) {
                           : "bg-red-100 text-red-800"
                       }
                     >
-                      {area.status ? "Active" : "Inactive"}
+                      {area.status ? "Ativo" : "Inativo"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -141,7 +141,7 @@ export default function AreaTable({ onEdit }: AreaTableProps) {
                         onClick={() => onEdit(area)}
                       >
                         <Pencil className="h-4 w-4 mr-1" />
-                        Edit
+                        Editar
                       </Button>
                       <Button
                         variant="outline"
@@ -150,7 +150,7 @@ export default function AreaTable({ onEdit }: AreaTableProps) {
                         onClick={() => handleDelete(area)}
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
+                        Excluir
                       </Button>
                     </div>
                   </TableCell>
@@ -159,7 +159,7 @@ export default function AreaTable({ onEdit }: AreaTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-10 text-gray-500">
-                  No areas found
+                  Nenhuma área encontrada
                 </TableCell>
               </TableRow>
             )}
@@ -171,19 +171,19 @@ export default function AreaTable({ onEdit }: AreaTableProps) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the area "{areaToDelete?.name}". This action cannot be
-              undone.
+              Isso excluirá permanentemente a área "{areaToDelete?.name}". Esta ação não pode ser
+              desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-red-500 hover:bg-red-600"
             >
-              Delete
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

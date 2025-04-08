@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { DocumentTracking, Document, Area } from "@shared/schema";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   Dialog,
   DialogContent,
@@ -52,7 +53,7 @@ export default function TrackingModal({ documentId, isOpen, onClose }: TrackingM
               <ClipboardList className="h-6 w-6 text-primary-600" />
             </div>
             <DialogTitle className="text-lg leading-6 font-medium">
-              Document Tracking: {document?.trackingNumber || "Loading..."}
+              Rastreamento do Documento: {document?.trackingNumber || "Carregando..."}
             </DialogTitle>
           </div>
         </DialogHeader>
@@ -144,21 +145,21 @@ export default function TrackingModal({ documentId, isOpen, onClose }: TrackingM
                         <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                           <div>
                             <p className="text-sm text-gray-500">
-                              Document
+                              Documento
                               <span className="font-medium text-gray-900 ml-1">
                                 {index === 0
-                                  ? "created"
+                                  ? "criado"
                                   : index === trackingEntries.length - 1
-                                  ? "completed"
-                                  : "transferred"}
+                                  ? "concluído"
+                                  : "transferido"}
                               </span>
                               {index === 0 ? (
                                 <span className="ml-1">
-                                  in {getAreaName(entry.fromAreaId)}
+                                  em {getAreaName(entry.fromAreaId)}
                                 </span>
                               ) : (
                                 <span className="ml-1">
-                                  from {getAreaName(entry.fromAreaId)} to{" "}
+                                  de {getAreaName(entry.fromAreaId)} para{" "}
                                   {getAreaName(entry.toAreaId)}
                                 </span>
                               )}
@@ -174,18 +175,18 @@ export default function TrackingModal({ documentId, isOpen, onClose }: TrackingM
                                   rel="noopener noreferrer"
                                   className="hover:underline"
                                 >
-                                  View attachment
+                                  Ver anexo
                                 </a>
                               </p>
                             )}
                           </div>
                           <div className="text-right text-sm whitespace-nowrap text-gray-500">
                             <time dateTime={new Date(entry.createdAt).toISOString()}>
-                              {format(new Date(entry.createdAt), "MMM dd, yyyy")}
+                              {format(new Date(entry.createdAt), "dd 'de' MMM 'de' yyyy", { locale: ptBR })}
                             </time>
                             <br />
                             <time dateTime={new Date(entry.createdAt).toISOString()}>
-                              {format(new Date(entry.createdAt), "hh:mm a")}
+                              {format(new Date(entry.createdAt), "HH:mm", { locale: ptBR })}
                             </time>
                           </div>
                         </div>
@@ -194,14 +195,14 @@ export default function TrackingModal({ documentId, isOpen, onClose }: TrackingM
                   </li>
                 ))
               ) : (
-                <li className="py-4 text-center text-gray-500">No tracking entries found</li>
+                <li className="py-4 text-center text-gray-500">Nenhum registro de rastreamento encontrado</li>
               )}
             </ul>
           </div>
         </div>
 
         <DialogFooter>
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={onClose}>Fechar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

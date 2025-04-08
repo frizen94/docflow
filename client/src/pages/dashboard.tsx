@@ -59,7 +59,7 @@ export default function Dashboard() {
               icon={CheckCircle}
               color="success"
               linkText="Ver concluídos"
-              linkHref="/documents?status=Completed"
+              linkHref="/documents?status=Concluído"
             />
             <StatsCard
               title="Prazos se Aproximando"

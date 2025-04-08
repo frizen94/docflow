@@ -64,11 +64,16 @@ export default function DocumentTable({ status, areaId }: DocumentTableProps) {
     switch (status.toLowerCase()) {
       case "completed":
       case "approved":
+      case "concluído":
+      case "aprovado":
         return "bg-green-100 text-green-800";
       case "in review":
       case "in progress":
+      case "em revisão":
+      case "em progresso":
         return "bg-yellow-100 text-yellow-800";
       case "pending":
+      case "pendente":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";

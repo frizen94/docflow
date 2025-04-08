@@ -65,8 +65,8 @@ export default function AreaForm({ isOpen, onClose, editMode, area }: AreaFormPr
     },
     onSuccess: () => {
       toast({
-        title: `Area ${editMode ? "updated" : "created"}`,
-        description: `The area has been ${editMode ? "updated" : "created"} successfully.`,
+        title: `Área ${editMode ? "atualizada" : "criada"}`,
+        description: `A área foi ${editMode ? "atualizada" : "criada"} com sucesso.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/areas"] });
       onClose();
@@ -74,8 +74,8 @@ export default function AreaForm({ isOpen, onClose, editMode, area }: AreaFormPr
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to ${editMode ? "update" : "create"} area: ${error}`,
+        title: "Erro",
+        description: `Falha ao ${editMode ? "atualizar" : "criar"} área: ${error}`,
         variant: "destructive",
       });
     },
@@ -90,7 +90,7 @@ export default function AreaForm({ isOpen, onClose, editMode, area }: AreaFormPr
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editMode ? "Edit Area" : "Add New Area"}</DialogTitle>
+          <DialogTitle>{editMode ? "Editar Área" : "Adicionar Nova Área"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -99,9 +99,9 @@ export default function AreaForm({ isOpen, onClose, editMode, area }: AreaFormPr
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Area Name</FormLabel>
+                  <FormLabel>Nome da Área</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Enter area name" />
+                    <Input {...field} placeholder="Digite o nome da área" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,7 +115,7 @@ export default function AreaForm({ isOpen, onClose, editMode, area }: AreaFormPr
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
                     <FormLabel>Status</FormLabel>
-                    <FormDescription>Activate or deactivate this area</FormDescription>
+                    <FormDescription>Ativar ou desativar esta área</FormDescription>
                   </div>
                   <FormControl>
                     <Switch
@@ -133,13 +133,13 @@ export default function AreaForm({ isOpen, onClose, editMode, area }: AreaFormPr
                 variant="outline"
                 onClick={onClose}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={mutation.isPending}
               >
-                {mutation.isPending ? "Saving..." : editMode ? "Update" : "Save"}
+                {mutation.isPending ? "Salvando..." : editMode ? "Atualizar" : "Salvar"}
               </Button>
             </DialogFooter>
           </form>

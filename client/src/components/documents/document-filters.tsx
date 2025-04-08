@@ -56,9 +56,9 @@ export default function DocumentFilters({ onFilterChange }: DocumentFiltersProps
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="all">Todos os Status</SelectItem>
-                  <SelectItem value="In Progress">Em Progresso</SelectItem>
-                  <SelectItem value="Completed">Concluído</SelectItem>
-                  <SelectItem value="Pending">Pendente</SelectItem>
+                  <SelectItem value="Em Progresso">Em Progresso</SelectItem>
+                  <SelectItem value="Concluído">Concluído</SelectItem>
+                  <SelectItem value="Pendente">Pendente</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>

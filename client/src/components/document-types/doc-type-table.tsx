@@ -48,8 +48,8 @@ export default function DocTypeTable({ onEdit }: DocTypeTableProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Document type deleted",
-        description: "The document type has been deleted successfully.",
+        title: "Tipo de documento excluído",
+        description: "O tipo de documento foi excluído com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/document-types"] });
       setDeleteDialogOpen(false);
@@ -57,8 +57,8 @@ export default function DocTypeTable({ onEdit }: DocTypeTableProps) {
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to delete document type: ${error}`,
+        title: "Erro",
+        description: `Falha ao excluir tipo de documento: ${error}`,
         variant: "destructive",
       });
     },
@@ -82,10 +82,10 @@ export default function DocTypeTable({ onEdit }: DocTypeTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>#</TableHead>
-              <TableHead>Document Type</TableHead>
-              <TableHead>Registration Date</TableHead>
+              <TableHead>Tipo de Documento</TableHead>
+              <TableHead>Data de Registro</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -130,7 +130,7 @@ export default function DocTypeTable({ onEdit }: DocTypeTableProps) {
                           : "bg-red-100 text-red-800"
                       }
                     >
-                      {docType.status ? "Active" : "Inactive"}
+                      {docType.status ? "Ativo" : "Inativo"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -141,7 +141,7 @@ export default function DocTypeTable({ onEdit }: DocTypeTableProps) {
                         onClick={() => onEdit(docType)}
                       >
                         <Pencil className="h-4 w-4 mr-1" />
-                        Edit
+                        Editar
                       </Button>
                       <Button
                         variant="outline"
@@ -150,7 +150,7 @@ export default function DocTypeTable({ onEdit }: DocTypeTableProps) {
                         onClick={() => handleDelete(docType)}
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
+                        Excluir
                       </Button>
                     </div>
                   </TableCell>
@@ -159,7 +159,7 @@ export default function DocTypeTable({ onEdit }: DocTypeTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-10 text-gray-500">
-                  No document types found
+                  Nenhum tipo de documento encontrado
                 </TableCell>
               </TableRow>
             )}
@@ -171,19 +171,19 @@ export default function DocTypeTable({ onEdit }: DocTypeTableProps) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the document type "{docTypeToDelete?.name}". This action cannot be
-              undone.
+              Isso excluirá permanentemente o tipo de documento "{docTypeToDelete?.name}". Esta ação não pode ser
+              desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-red-500 hover:bg-red-600"
             >
-              Delete
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
