@@ -47,14 +47,18 @@ export interface IStorage {
   updateDocument(id: number, document: Partial<InsertDocument>): Promise<Document | undefined>;
   deleteDocument(id: number): Promise<boolean>;
   getDocumentsByAreaId(areaId: number): Promise<Document[]>;
+  getDocumentsByEmployeeId(employeeId: number): Promise<Document[]>;
   getDocumentsByStatus(status: string): Promise<Document[]>;
   getDocumentsWithDeadline(days: number): Promise<Document[]>;
+  calculateDeadlineDate(startDate: Date, deadlineDays: number): Date;
   
   // Document Tracking operations
   getDocumentTracking(id: number): Promise<DocumentTracking | undefined>;
   createDocumentTracking(tracking: InsertDocumentTracking): Promise<DocumentTracking>;
   listDocumentTrackingByDocumentId(documentId: number): Promise<DocumentTracking[]>;
   getRecentActivities(limit: number): Promise<DocumentTracking[]>;
+  forwardDocumentToArea(documentId: number, toAreaId: number, description: string, deadlineDays?: number): Promise<DocumentTracking>;
+  forwardDocumentToEmployee(documentId: number, toAreaId: number, toEmployeeId: number, description: string, deadlineDays?: number): Promise<DocumentTracking>;
 }
 
 export class MemStorage implements IStorage {
@@ -118,7 +122,12 @@ export class MemStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
-    const newUser: User = { ...user, id, createdAt: new Date() };
+    const newUser: User = { 
+      ...user, 
+      id, 
+      status: user.status !== undefined ? user.status : true, 
+      createdAt: new Date() 
+    };
     this.users.set(id, newUser);
     return newUser;
   }
@@ -147,7 +156,12 @@ export class MemStorage implements IStorage {
 
   async createArea(area: InsertArea): Promise<Area> {
     const id = this.areaIdCounter++;
-    const newArea: Area = { ...area, id, createdAt: new Date() };
+    const newArea: Area = { 
+      ...area, 
+      id,
+      status: area.status !== undefined ? area.status : true,
+      createdAt: new Date() 
+    };
     this.areas.set(id, newArea);
     return newArea;
   }
@@ -176,7 +190,12 @@ export class MemStorage implements IStorage {
 
   async createDocumentType(docType: InsertDocumentType): Promise<DocumentType> {
     const id = this.documentTypeIdCounter++;
-    const newDocType: DocumentType = { ...docType, id, createdAt: new Date() };
+    const newDocType: DocumentType = { 
+      ...docType, 
+      id, 
+      status: docType.status !== undefined ? docType.status : true,
+      createdAt: new Date() 
+    };
     this.documentTypes.set(id, newDocType);
     return newDocType;
   }
@@ -209,7 +228,14 @@ export class MemStorage implements IStorage {
 
   async createEmployee(employee: InsertEmployee): Promise<Employee> {
     const id = this.employeeIdCounter++;
-    const newEmployee: Employee = { ...employee, id, createdAt: new Date() };
+    const newEmployee: Employee = { 
+      ...employee, 
+      id, 
+      status: employee.status !== undefined ? employee.status : true,
+      email: employee.email || null,
+      phone: employee.phone || null,
+      createdAt: new Date() 
+    };
     this.employees.set(id, newEmployee);
     return newEmployee;
   }
@@ -242,7 +268,20 @@ export class MemStorage implements IStorage {
 
   async createDocument(document: InsertDocument): Promise<Document> {
     const id = this.documentIdCounter++;
-    const newDocument: Document = { ...document, id, createdAt: new Date() };
+    const newDocument: Document = { 
+      ...document, 
+      id,
+      senderEmail: document.senderEmail || null,
+      senderPhone: document.senderPhone || null,
+      senderAddress: document.senderAddress || null,
+      companyRuc: document.companyRuc || null,
+      companyName: document.companyName || null,
+      filePath: document.filePath || null,
+      deadline: document.deadline || null,
+      deadlineDays: document.deadlineDays || null,
+      currentEmployeeId: document.currentEmployeeId || null,
+      createdAt: new Date() 
+    };
     this.documents.set(id, newDocument);
     return newDocument;
   }
@@ -267,9 +306,19 @@ export class MemStorage implements IStorage {
   async getDocumentsByAreaId(areaId: number): Promise<Document[]> {
     return Array.from(this.documents.values()).filter(doc => doc.currentAreaId === areaId);
   }
+  
+  async getDocumentsByEmployeeId(employeeId: number): Promise<Document[]> {
+    return Array.from(this.documents.values()).filter(doc => doc.currentEmployeeId === employeeId);
+  }
 
   async getDocumentsByStatus(status: string): Promise<Document[]> {
     return Array.from(this.documents.values()).filter(doc => doc.status === status);
+  }
+  
+  calculateDeadlineDate(startDate: Date, deadlineDays: number): Date {
+    const deadline = new Date(startDate);
+    deadline.setDate(deadline.getDate() + deadlineDays);
+    return deadline;
   }
 
   async getDocumentsWithDeadline(days: number): Promise<Document[]> {
@@ -291,7 +340,16 @@ export class MemStorage implements IStorage {
 
   async createDocumentTracking(tracking: InsertDocumentTracking): Promise<DocumentTracking> {
     const id = this.documentTrackingIdCounter++;
-    const newTracking: DocumentTracking = { ...tracking, id, createdAt: new Date() };
+    const newTracking: DocumentTracking = { 
+      ...tracking, 
+      id, 
+      description: tracking.description || null,
+      attachmentPath: tracking.attachmentPath || null,
+      fromEmployeeId: tracking.fromEmployeeId || null,
+      toEmployeeId: tracking.toEmployeeId || null,
+      deadlineDays: tracking.deadlineDays || null,
+      createdAt: new Date() 
+    };
     this.documentTrackings.set(id, newTracking);
     return newTracking;
   }
@@ -306,6 +364,99 @@ export class MemStorage implements IStorage {
     return Array.from(this.documentTrackings.values())
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
+  }
+  
+  async forwardDocumentToArea(documentId: number, toAreaId: number, description: string, deadlineDays?: number): Promise<DocumentTracking> {
+    // Buscar o documento atual
+    const document = await this.getDocument(documentId);
+    if (!document) {
+      throw new Error(`Documento com ID ${documentId} não encontrado`);
+    }
+    
+    const fromAreaId = document.currentAreaId;
+    
+    // Criar o registro de tracking
+    const tracking: InsertDocumentTracking = {
+      documentId,
+      fromAreaId,
+      toAreaId,
+      description: description || null,
+      attachmentPath: null,
+      fromEmployeeId: null,
+      toEmployeeId: null,
+      deadlineDays: deadlineDays || null,
+      createdBy: document.createdBy
+    };
+    
+    const newTracking = await this.createDocumentTracking(tracking);
+    
+    // Atualizar o documento com a nova área atual
+    const updateData: Partial<InsertDocument> = {
+      currentAreaId: toAreaId,
+      currentEmployeeId: null // Limpar o funcionário designado ao mudar de área
+    };
+    
+    // Se houver prazo em dias, calcular e atualizar a data de prazo
+    if (deadlineDays) {
+      updateData.deadlineDays = deadlineDays;
+      updateData.deadline = this.calculateDeadlineDate(new Date(), deadlineDays);
+    }
+    
+    await this.updateDocument(documentId, updateData);
+    
+    return newTracking;
+  }
+  
+  async forwardDocumentToEmployee(documentId: number, toAreaId: number, toEmployeeId: number, description: string, deadlineDays?: number): Promise<DocumentTracking> {
+    // Buscar o documento atual
+    const document = await this.getDocument(documentId);
+    if (!document) {
+      throw new Error(`Documento com ID ${documentId} não encontrado`);
+    }
+    
+    // Verificar se o funcionário pertence à área destino
+    const employee = await this.getEmployee(toEmployeeId);
+    if (!employee) {
+      throw new Error(`Funcionário com ID ${toEmployeeId} não encontrado`);
+    }
+    
+    if (employee.areaId !== toAreaId) {
+      throw new Error(`Funcionário com ID ${toEmployeeId} não pertence à área com ID ${toAreaId}`);
+    }
+    
+    const fromAreaId = document.currentAreaId;
+    const fromEmployeeId = document.currentEmployeeId || null;
+    
+    // Criar o registro de tracking
+    const tracking: InsertDocumentTracking = {
+      documentId,
+      fromAreaId,
+      toAreaId,
+      fromEmployeeId,
+      toEmployeeId,
+      description: description || null,
+      attachmentPath: null,
+      deadlineDays: deadlineDays || null,
+      createdBy: document.createdBy
+    };
+    
+    const newTracking = await this.createDocumentTracking(tracking);
+    
+    // Atualizar o documento com a nova área e funcionário atual
+    const updateData: Partial<InsertDocument> = {
+      currentAreaId: toAreaId,
+      currentEmployeeId: toEmployeeId
+    };
+    
+    // Se houver prazo em dias, calcular e atualizar a data de prazo
+    if (deadlineDays) {
+      updateData.deadlineDays = deadlineDays;
+      updateData.deadline = this.calculateDeadlineDate(new Date(), deadlineDays);
+    }
+    
+    await this.updateDocument(documentId, updateData);
+    
+    return newTracking;
   }
 }
 

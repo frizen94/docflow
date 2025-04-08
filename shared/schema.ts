@@ -75,11 +75,13 @@ export const documents = pgTable("documents", {
   companyName: text("company_name"),
   originAreaId: integer("origin_area_id").notNull(),
   currentAreaId: integer("current_area_id").notNull(),
+  currentEmployeeId: integer("current_employee_id"),  // O funcionário específico responsável pelo documento
   status: text("status").notNull(), // 'Pending', 'In Progress', 'Completed', etc.
   subject: text("subject").notNull(),
   folios: integer("folios").notNull(),
   filePath: text("file_path"),
-  deadline: timestamp("deadline"),
+  deadlineDays: integer("deadline_days"),  // Prazo em dias
+  deadline: timestamp("deadline"),         // Data final calculada
   createdBy: integer("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -94,8 +96,11 @@ export const documentTracking = pgTable("document_tracking", {
   documentId: integer("document_id").notNull(),
   fromAreaId: integer("from_area_id").notNull(),
   toAreaId: integer("to_area_id").notNull(),
+  fromEmployeeId: integer("from_employee_id"),
+  toEmployeeId: integer("to_employee_id"),
   description: text("description"),
   attachmentPath: text("attachment_path"),
+  deadlineDays: integer("deadline_days"),  // Prazo em dias definido no encaminhamento
   createdBy: integer("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +13,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, FileText, User, Building, CornerDownRight, Clipboard } from "lucide-react";
+import { ArrowLeft, FileText, User, Building, CornerDownRight, Clipboard, SendIcon, HistoryIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import DocumentForm from "@/components/documents/document-form";
 import TrackingModal from "@/components/documents/tracking-modal";
+import DocumentForwardModal from "@/components/documents/document-forward-modal";
+import DocumentTrackingHistory from "@/components/documents/document-tracking-history";
 
 // Schema for tracking form
 const trackingFormSchema = z.object({
@@ -46,6 +49,7 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
   const { toast } = useToast();
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showForwardModal, setShowForwardModal] = useState(false);
 
   // Fetch document data
   const { data: document, isLoading: isLoadingDocument } = useQuery<Document>({
@@ -170,10 +174,10 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
           className="mr-4"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Documents
+          Voltar para Documentos
         </Button>
         <h1 className="text-2xl font-bold tracking-tight">
-          Document Details
+          Detalhes do Documento
           {document && (
             <span className="ml-2 text-gray-500 font-normal text-lg">
               {document.trackingNumber}
@@ -369,7 +373,7 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <CornerDownRight className="h-5 w-5 mr-2" />
-                  Transfer Document
+                  Encaminhar Documento
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -436,17 +440,27 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Clipboard className="h-5 w-5 mr-2" />
-                  Document Actions
+                  Ações do Documento
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <Button
                     variant="outline"
-                    className="w-full"
-                    onClick={() => setShowTrackingModal(true)}
+                    className="w-full flex items-center justify-center"
+                    onClick={() => setShowForwardModal(true)}
                   >
-                    View Tracking History
+                    <SendIcon className="h-4 w-4 mr-2" />
+                    Encaminhar Documento
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="w-full flex items-center justify-center"
+                    onClick={() => document && document.id && setShowTrackingModal(true)}
+                  >
+                    <HistoryIcon className="h-4 w-4 mr-2" />
+                    Histórico de Tramitação
                   </Button>
                   
                   <Button
@@ -454,7 +468,7 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                     className="w-full"
                     onClick={() => setShowEditForm(true)}
                   >
-                    Edit Document
+                    Editar Documento
                   </Button>
                   
                   <Button
@@ -463,21 +477,25 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                     disabled={document.status === "Completed" || completeMutation.isPending}
                     onClick={handleCompleteDocument}
                   >
-                    {completeMutation.isPending ? "Processing..." : "Mark as Completed"}
+                    {completeMutation.isPending ? "Processando..." : "Finalizar Documento"}
                   </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Tracking Modal */}
-          {showTrackingModal && (
-            <TrackingModal
+          {/* Forward Modal */}
+          {showForwardModal && document && (
+            <DocumentForwardModal
               documentId={document.id}
-              isOpen={showTrackingModal}
-              onClose={() => setShowTrackingModal(false)}
+              currentAreaId={document.currentAreaId}
+              isOpen={showForwardModal}
+              onClose={() => setShowForwardModal(false)}
             />
           )}
+
+          {/* Tracking History Component */}
+          <DocumentTrackingHistory documentId={document.id} />
         </>
       ) : (
         <div className="text-center py-10">

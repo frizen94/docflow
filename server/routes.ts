@@ -427,6 +427,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to retrieve documents" });
     }
   });
+  
+  app.get("/api/documents/employee/:employeeId", isAuthenticated, async (req, res) => {
+    try {
+      const documents = await storage.getDocumentsByEmployeeId(Number(req.params.employeeId));
+      res.json(documents);
+    } catch (error) {
+      res.status(500).json({ error: "Falha ao recuperar documentos por funcionário" });
+    }
+  });
 
   app.post("/api/documents", isAuthenticated, async (req, res) => {
     try {
@@ -512,6 +521,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(tracking);
     } catch (error) {
       handleValidationError(error, res);
+    }
+  });
+  
+  // Rotas de encaminhamento de documentos
+  app.post("/api/documents/:id/forward-to-area", isAuthenticated, async (req, res) => {
+    try {
+      const documentId = Number(req.params.id);
+      const { toAreaId, description, deadlineDays } = req.body;
+      
+      if (!toAreaId) {
+        return res.status(400).json({ error: "Área de destino é obrigatória" });
+      }
+      
+      const tracking = await storage.forwardDocumentToArea(
+        documentId,
+        Number(toAreaId),
+        description || "",
+        deadlineDays ? Number(deadlineDays) : undefined
+      );
+      
+      res.status(201).json(tracking);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Erro ao encaminhar documento para área" });
+      }
+    }
+  });
+  
+  app.post("/api/documents/:id/forward-to-employee", isAuthenticated, async (req, res) => {
+    try {
+      const documentId = Number(req.params.id);
+      const { toAreaId, toEmployeeId, description, deadlineDays } = req.body;
+      
+      if (!toAreaId) {
+        return res.status(400).json({ error: "Área de destino é obrigatória" });
+      }
+      
+      if (!toEmployeeId) {
+        return res.status(400).json({ error: "Funcionário de destino é obrigatório" });
+      }
+      
+      const tracking = await storage.forwardDocumentToEmployee(
+        documentId,
+        Number(toAreaId),
+        Number(toEmployeeId),
+        description || "",
+        deadlineDays ? Number(deadlineDays) : undefined
+      );
+      
+      res.status(201).json(tracking);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Erro ao encaminhar documento para funcionário" });
+      }
     }
   });
 
