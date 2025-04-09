@@ -161,9 +161,9 @@ export default function DocumentFormModal({
             .padStart(3, "0")}`
         : "";
             
-      // Calculate deadline date based on deadlineDays if provided
+      // Calcular deadline somente se a prioridade for "Com Contagem de Prazo"
       let deadline = null;
-      if (values.deadlineDays !== undefined && values.deadlineDays !== null) {
+      if (values.priority === "Com Contagem de Prazo" && values.deadlineDays !== undefined && values.deadlineDays !== null) {
         const deadlineDate = addDays(new Date(), values.deadlineDays);
         deadline = deadlineDate.toISOString();
       }
@@ -446,38 +446,36 @@ export default function DocumentFormModal({
                             <SelectItem value="Urgente">Urgente</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormDescription>
-                          Normal: prioridade padrão<br />
-                          Com Contagem de Prazo: processos com prazo para conclusão<br />
-                          Urgente: processos prioritários sem prazo definido
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="deadlineDays"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Prazo em Dias</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            min={1}
-                            placeholder="Prazo em dias"
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Vencimento: {format(addDays(new Date(), field.value || 0), "dd/MM/yyyy", { locale: ptBR })}
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Mostra campo de prazo apenas se priority for "Com Contagem de Prazo" */}
+                  {form.watch("priority") === "Com Contagem de Prazo" && (
+                    <FormField
+                      control={form.control}
+                      name="deadlineDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prazo em Dias</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              min={1}
+                              placeholder="Prazo em dias"
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Vencimento: {format(addDays(new Date(), field.value || 0), "dd/MM/yyyy", { locale: ptBR })}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
                   {/* File Upload Field */}
                   <div className="mt-4">

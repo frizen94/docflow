@@ -73,7 +73,7 @@ export const documents = pgTable("documents", {
   filePath: text("file_path"),
   priority: text("priority").default("Normal").notNull(), // 'Normal', 'Com Contagem de Prazo', 'Urgente'
   deadlineDays: integer("deadline_days"),  // Prazo em dias
-  deadline: timestamp("deadline"),         // Data final calculada
+  deadline: timestamp("deadline"),         // Data final calculada (opcional)
   createdBy: integer("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
