@@ -46,6 +46,7 @@ const documentFormSchema = insertDocumentSchema
       message: "O prazo deve ser de pelo menos 1 dia",
     }).optional(),
     filePath: z.string().optional().transform(val => val || ''),
+    priority: z.enum(["Normal", "Com Contagem de Prazo", "Urgente"]).default("Normal"),
   })
   .omit({ trackingNumber: true, deadline: true, folios: true });
 
@@ -85,6 +86,14 @@ export default function DocumentFormModal({
     enabled: editMode && !!documentId,
   });
 
+  // Função auxiliar para validar a prioridade
+  const validatePriority = (priority?: string): "Normal" | "Com Contagem de Prazo" | "Urgente" => {
+    if (priority === "Normal" || priority === "Com Contagem de Prazo" || priority === "Urgente") {
+      return priority;
+    }
+    return "Normal";
+  };
+
   // Generate default values for form
   const getDefaultValues = (): Partial<DocumentFormValues> => {
     if (editMode && document) {
@@ -107,6 +116,7 @@ export default function DocumentFormModal({
         subject: document.subject || "",
         deadlineDays: deadlineDays,
         filePath: document.filePath || "",
+        priority: validatePriority(document.priority),
       };
     }
 
@@ -123,6 +133,7 @@ export default function DocumentFormModal({
       status: "Pending",
       deadlineDays: 5,
       filePath: "",
+      priority: "Normal",
     };
   };
 
@@ -409,6 +420,37 @@ export default function DocumentFormModal({
                             É necessário criar áreas primeiro
                           </p>
                         )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prioridade</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a prioridade" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Normal">Normal</SelectItem>
+                            <SelectItem value="Com Contagem de Prazo">Com Contagem de Prazo</SelectItem>
+                            <SelectItem value="Urgente">Urgente</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Normal: prioridade padrão<br />
+                          Com Contagem de Prazo: processos com prazo para conclusão<br />
+                          Urgente: processos prioritários sem prazo definido
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

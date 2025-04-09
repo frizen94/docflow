@@ -80,6 +80,20 @@ export default function DocumentTable({ status, areaId, onEdit }: DocumentTableP
         return "bg-gray-100 text-gray-800";
     }
   };
+  
+  // Get priority badge color
+  const getPriorityBadgeColor = (priority: string) => {
+    switch (priority) {
+      case "Urgente":
+        return "bg-red-100 text-red-800";
+      case "Com Contagem de Prazo":
+        return "bg-amber-100 text-amber-800";
+      case "Normal":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
   return (
     <>
@@ -92,6 +106,7 @@ export default function DocumentTable({ status, areaId, onEdit }: DocumentTableP
               <TableHead>Nº do Documento</TableHead>
               <TableHead>Localização Atual</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Prioridade</TableHead>
               <TableHead>Prazo</TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
@@ -112,6 +127,9 @@ export default function DocumentTable({ status, areaId, onEdit }: DocumentTableP
                   </TableCell>
                   <TableCell>
                     <Skeleton className="h-4 w-32" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-20 rounded-full" />
                   </TableCell>
                   <TableCell>
                     <Skeleton className="h-6 w-20 rounded-full" />
@@ -157,6 +175,14 @@ export default function DocumentTable({ status, areaId, onEdit }: DocumentTableP
                       className={getStatusBadgeColor(doc.status)}
                     >
                       {doc.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={getPriorityBadgeColor(doc.priority || "Normal")}
+                    >
+                      {doc.priority || "Normal"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -211,7 +237,7 @@ export default function DocumentTable({ status, areaId, onEdit }: DocumentTableP
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-10 text-gray-500">
+                <TableCell colSpan={8} className="text-center py-10 text-gray-500">
                   Nenhum documento encontrado
                 </TableCell>
               </TableRow>
