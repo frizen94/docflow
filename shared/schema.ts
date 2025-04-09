@@ -62,7 +62,7 @@ export type Employee = typeof employees.$inferSelect;
 export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   trackingNumber: text("tracking_number").notNull().unique(),
-  documentNumber: text("document_number").notNull(),
+  documentNumber: text("document_number").notNull(), // Número do processo
   documentTypeId: integer("document_type_id").notNull(),
   originAreaId: integer("origin_area_id").notNull(),
   currentAreaId: integer("current_area_id").notNull(),

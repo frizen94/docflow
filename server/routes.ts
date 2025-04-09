@@ -465,7 +465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ajustar valores null para string vazia em campos opcionais de texto
       const payload = { ...req.body };
-      ['senderEmail', 'senderPhone', 'senderAddress', 'companyRuc', 'companyName', 'filePath'].forEach(field => {
+      ['filePath'].forEach(field => {
         if (payload[field] === null || payload[field] === undefined) {
           payload[field] = '';
         }
@@ -509,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ajustar valores null para string vazia em campos opcionais de texto
       const payload = { ...req.body };
-      ['senderEmail', 'senderPhone', 'senderAddress', 'companyRuc', 'companyName', 'filePath'].forEach(field => {
+      ['filePath'].forEach(field => {
         if (payload[field] === null || payload[field] === undefined) {
           payload[field] = '';
         }

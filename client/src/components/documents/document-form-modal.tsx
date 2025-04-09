@@ -154,12 +154,29 @@ export default function DocumentFormModal({
   // Mutation for creating or updating documents
   const mutation = useMutation({
     mutationFn: async (values: DocumentFormValues) => {
+      // Gerar número de processo automaticamente
+      const generateProcessNumber = () => {
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const randomDigits = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        
+        // Formato: PROC-ANO-MES-DIA-XXXX (ex: PROC-2023-08-15-1234)
+        return `PROC-${year}-${month}-${day}-${randomDigits}`;
+      };
+      
       // Generate a tracking number for new documents
       const trackingNumber = !editMode
         ? `TRK-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)
             .toString()
             .padStart(3, "0")}`
         : "";
+      
+      // Gerar número de processo para novos documentos
+      const documentNumber = !editMode
+        ? generateProcessNumber()
+        : document?.documentNumber || "";
             
       // Calcular deadline somente se a prioridade for "Com Contagem de Prazo"
       let deadline = null;
@@ -170,6 +187,7 @@ export default function DocumentFormModal({
       
       const payload = {
         ...values,
+        documentNumber, // Número do processo gerado automaticamente
         ...(deadline ? { deadline } : {}),
         createdBy: user?.id || 1, // Usa o ID do usuário logado
         documentTypeId: Number(values.documentTypeId),
@@ -177,11 +195,6 @@ export default function DocumentFormModal({
         currentAreaId: Number(values.currentAreaId),
         ...(trackingNumber ? { trackingNumber } : {}),
         folios: 1, // Valor padrão para folios
-        // Adicionar campos que são requeridos pela tabela mas não estão no formulário
-        representation: "Próprio", // Campo obrigatório
-        senderName: "Usuário",     // Campo obrigatório
-        senderLastName: "Sistema", // Campo obrigatório
-        senderDni: "00000000000"   // Campo obrigatório
       };
       
       // Remove deadlineDays from the payload as it's not in the schema
@@ -299,19 +312,7 @@ export default function DocumentFormModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Coluna da Esquerda */}
                 <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="documentNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Número do Documento</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Digite o número do documento" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Número do processo será gerado automaticamente, não sendo necessário exibi-lo no formulário */}
 
                   <FormField
                     control={form.control}
