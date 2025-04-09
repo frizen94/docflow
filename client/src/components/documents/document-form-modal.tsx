@@ -177,12 +177,19 @@ export default function DocumentFormModal({
         currentAreaId: Number(values.currentAreaId),
         ...(trackingNumber ? { trackingNumber } : {}),
         folios: 1, // Valor padrão para folios
+        // Adicionar campos que são requeridos pela tabela mas não estão no formulário
+        representation: "Próprio", // Campo obrigatório
+        senderName: "Usuário",     // Campo obrigatório
+        senderLastName: "Sistema", // Campo obrigatório
+        senderDni: "00000000000"   // Campo obrigatório
       };
       
       // Remove deadlineDays from the payload as it's not in the schema
       if ('deadlineDays' in payload) {
         delete (payload as any).deadlineDays;
       }
+      
+      console.log("Final payload for document creation:", payload);
 
       if (editMode && documentId) {
         const res = await apiRequest("PUT", `/api/documents/${documentId}`, payload);
@@ -223,12 +230,16 @@ export default function DocumentFormModal({
 
   // Handle form submission
   const onSubmit = (values: DocumentFormValues) => {
+    // Log form values for debugging
+    console.log("Form values before submission:", values);
+    
     // Create FormData for file upload
     const formData = new FormData();
     
     // Append file if selected
     if (selectedFile) {
       formData.append("file", selectedFile);
+      console.log("Uploading file:", selectedFile.name);
       
       // Upload file first
       fetch("/api/upload", {
@@ -236,13 +247,18 @@ export default function DocumentFormModal({
         body: formData,
         credentials: "include",
       })
-        .then(response => response.json())
+        .then(response => {
+          console.log("File upload response status:", response.status);
+          return response.json();
+        })
         .then(data => {
+          console.log("File upload response data:", data);
           // If file upload successful, add the file path to the document data
           const valuesWithFile = {
             ...values,
             filePath: data.filePath
           };
+          console.log("Submitting form with file:", valuesWithFile);
           mutation.mutate(valuesWithFile);
         })
         .catch(error => {
@@ -254,6 +270,7 @@ export default function DocumentFormModal({
           });
         });
     } else {
+      console.log("Submitting form without file:", values);
       // If no file, just submit the form data
       mutation.mutate(values);
     }
