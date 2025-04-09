@@ -5,6 +5,7 @@ import { insertUserSchema, User, Employee } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 import {
   Form,
@@ -30,6 +31,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
@@ -42,7 +44,7 @@ const userFormSchema = insertUserSchema.extend({
   if (!data.password) return true;
   return data.password === data.confirmPassword;
 }, {
-  message: "Passwords do not match",
+  message: "As senhas não correspondem",
   path: ["confirmPassword"],
 });
 
@@ -65,12 +67,12 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
 
   // Default values for the form
   const defaultValues: UserFormValues = {
-    username: user?.username || "",
+    username: "",
     password: "", // Don't pre-fill password
     confirmPassword: "",
-    name: user?.name || "",
-    role: user?.role || "Usuário",
-    status: user?.status ?? true,
+    name: "",
+    role: "Usuário",
+    status: true,
   };
 
   // Form setup
@@ -78,6 +80,22 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
     resolver: zodResolver(userFormSchema),
     defaultValues,
   });
+  
+  // Update form when edit mode or user changes
+  useEffect(() => {
+    if (editMode && user) {
+      form.reset({
+        username: user.username || "",
+        password: "", // Don't pre-fill password
+        confirmPassword: "",
+        name: user.name || "",
+        role: user.role || "Usuário",
+        status: user.status ?? true,
+      });
+    } else {
+      form.reset(defaultValues);
+    }
+  }, [editMode, user, form, isOpen]);
 
   // Mutation for creating or updating users
   const mutation = useMutation({
@@ -103,7 +121,7 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
       });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       onClose();
-      form.reset();
+      form.reset(defaultValues);
     },
     onError: (error) => {
       toast({

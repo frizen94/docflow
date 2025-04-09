@@ -5,6 +5,7 @@ import { insertAreaSchema, Area } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 import {
   Form,
@@ -23,6 +24,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 
@@ -42,8 +44,8 @@ export default function AreaForm({ isOpen, onClose, editMode, area }: AreaFormPr
 
   // Default values for the form
   const defaultValues: AreaFormValues = {
-    name: area?.name || "",
-    status: area?.status ?? true,
+    name: "",
+    status: true,
   };
 
   // Form setup
@@ -51,6 +53,18 @@ export default function AreaForm({ isOpen, onClose, editMode, area }: AreaFormPr
     resolver: zodResolver(areaFormSchema),
     defaultValues,
   });
+
+  // Update form when edit mode or area changes
+  useEffect(() => {
+    if (editMode && area) {
+      form.reset({
+        name: area.name || "",
+        status: area.status ?? true,
+      });
+    } else {
+      form.reset(defaultValues);
+    }
+  }, [editMode, area, form, isOpen]);
 
   // Mutation for creating or updating areas
   const mutation = useMutation({
@@ -70,7 +84,7 @@ export default function AreaForm({ isOpen, onClose, editMode, area }: AreaFormPr
       });
       queryClient.invalidateQueries({ queryKey: ["/api/areas"] });
       onClose();
-      form.reset();
+      form.reset(defaultValues);
     },
     onError: (error) => {
       toast({

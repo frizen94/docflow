@@ -5,6 +5,7 @@ import { insertEmployeeSchema, Employee, Area } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 import {
   Form,
@@ -30,6 +31,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 
@@ -54,13 +56,13 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
 
   // Default values for the form
   const defaultValues: EmployeeFormValues = {
-    dni: employee?.dni || "",
-    firstName: employee?.firstName || "",
-    lastName: employee?.lastName || "",
-    email: employee?.email || "",
-    phone: employee?.phone || "",
-    areaId: employee?.areaId || 0,
-    status: employee?.status ?? true,
+    dni: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    areaId: 0,
+    status: true,
   };
 
   // Form setup
@@ -68,6 +70,23 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
     resolver: zodResolver(employeeFormSchema),
     defaultValues,
   });
+
+  // Update form when props change (important for edit mode)
+  useEffect(() => {
+    if (editMode && employee) {
+      form.reset({
+        dni: employee.dni || "",
+        firstName: employee.firstName || "",
+        lastName: employee.lastName || "",
+        email: employee.email || "",
+        phone: employee.phone || "",
+        areaId: employee.areaId,
+        status: employee.status,
+      });
+    } else {
+      form.reset(defaultValues);
+    }
+  }, [editMode, employee, form, isOpen]);
 
   // Mutation for creating or updating employees
   const mutation = useMutation({
@@ -82,17 +101,17 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
     },
     onSuccess: () => {
       toast({
-        title: `Employee ${editMode ? "updated" : "created"}`,
-        description: `The employee has been ${editMode ? "updated" : "created"} successfully.`,
+        title: `Funcionário ${editMode ? "atualizado" : "criado"}`,
+        description: `O funcionário foi ${editMode ? "atualizado" : "criado"} com sucesso.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
       onClose();
-      form.reset();
+      form.reset(defaultValues);
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: `Failed to ${editMode ? "update" : "create"} employee: ${error}`,
+        title: "Erro",
+        description: `Falha ao ${editMode ? "atualizar" : "criar"} funcionário: ${error}`,
         variant: "destructive",
       });
     },
@@ -107,7 +126,12 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{editMode ? "Edit Employee" : "Add New Employee"}</DialogTitle>
+          <DialogTitle>{editMode ? "Editar Funcionário" : "Adicionar Novo Funcionário"}</DialogTitle>
+          <DialogDescription>
+            {editMode 
+              ? "Atualize as informações do funcionário" 
+              : "Preencha as informações para cadastrar um novo funcionário"}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -117,9 +141,9 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
                 name="dni"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>DNI</FormLabel>
+                    <FormLabel>CPF</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter DNI" />
+                      <Input {...field} placeholder="Digite o CPF" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -131,14 +155,14 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
                 name="areaId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Area</FormLabel>
+                    <FormLabel>Área</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(Number(value))}
                       defaultValue={field.value ? field.value.toString() : undefined}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select an area" />
+                          <SelectValue placeholder="Selecione uma área" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -161,9 +185,9 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter first name" />
+                      <Input {...field} placeholder="Digite o nome" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -175,9 +199,9 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>Sobrenome</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter last name" />
+                      <Input {...field} placeholder="Digite o sobrenome" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -193,7 +217,15 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter email" type="email" />
+                      <Input 
+                        placeholder="Digite o email" 
+                        type="email" 
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -205,9 +237,16 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>Telefone</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter phone number" />
+                      <Input 
+                        placeholder="Digite o telefone"
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -222,7 +261,7 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                   <div className="space-y-0.5">
                     <FormLabel>Status</FormLabel>
-                    <FormDescription>Activate or deactivate this employee</FormDescription>
+                    <FormDescription>Ativar ou desativar este funcionário</FormDescription>
                   </div>
                   <FormControl>
                     <Switch
@@ -240,13 +279,13 @@ export default function EmployeeForm({ isOpen, onClose, editMode, employee }: Em
                 variant="outline"
                 onClick={onClose}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={mutation.isPending}
               >
-                {mutation.isPending ? "Saving..." : editMode ? "Update" : "Save"}
+                {mutation.isPending ? "Salvando..." : editMode ? "Atualizar" : "Salvar"}
               </Button>
             </DialogFooter>
           </form>

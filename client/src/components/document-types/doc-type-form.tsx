@@ -5,6 +5,7 @@ import { insertDocumentTypeSchema, DocumentType } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 import {
   Form,
@@ -23,6 +24,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 
@@ -42,8 +44,8 @@ export default function DocTypeForm({ isOpen, onClose, editMode, docType }: DocT
 
   // Default values for the form
   const defaultValues: DocTypeFormValues = {
-    name: docType?.name || "",
-    status: docType?.status ?? true,
+    name: "",
+    status: true,
   };
 
   // Form setup
@@ -51,6 +53,18 @@ export default function DocTypeForm({ isOpen, onClose, editMode, docType }: DocT
     resolver: zodResolver(docTypeFormSchema),
     defaultValues,
   });
+
+  // Update form when edit mode or document type changes
+  useEffect(() => {
+    if (editMode && docType) {
+      form.reset({
+        name: docType.name || "",
+        status: docType.status ?? true,
+      });
+    } else {
+      form.reset(defaultValues);
+    }
+  }, [editMode, docType, form, isOpen]);
 
   // Mutation for creating or updating document types
   const mutation = useMutation({
@@ -70,7 +84,7 @@ export default function DocTypeForm({ isOpen, onClose, editMode, docType }: DocT
       });
       queryClient.invalidateQueries({ queryKey: ["/api/document-types"] });
       onClose();
-      form.reset();
+      form.reset(defaultValues);
     },
     onError: (error) => {
       toast({
