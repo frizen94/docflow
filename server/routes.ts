@@ -493,6 +493,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Parsed document data:", documentData);
         const document = await storage.createDocument(documentData);
         console.log("Document created successfully:", document);
+        
+        // Criar registro inicial de rastreamento
+        const initialTracking = {
+          documentId: document.id,
+          fromAreaId: document.originAreaId,
+          toAreaId: document.currentAreaId,
+          fromEmployeeId: null,
+          toEmployeeId: null,
+          description: `Documento ${document.documentNumber} criado com prioridade ${document.priority}`,
+          attachmentPath: document.filePath || null,
+          deadlineDays: document.deadlineDays || null,
+          createdBy: document.createdBy
+        };
+        
+        await storage.createDocumentTracking(initialTracking);
+        console.log("Initial tracking record created");
+        
         res.status(201).json(document);
       } catch (validationError) {
         console.error("Validation error:", validationError);

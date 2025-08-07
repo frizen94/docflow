@@ -225,7 +225,11 @@ export default function DocumentTable({ status, areaId, onEdit }: DocumentTableP
                           size="sm"
                           asChild
                         >
-                          <a href={doc.filePath} target="_blank" rel="noopener noreferrer">
+                          <a 
+                            href={`/api/files/${doc.filePath.split('/').pop()}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                          >
                             <FileText className="h-4 w-4 mr-1" />
                             Anexo
                           </a>
