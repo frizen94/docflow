@@ -131,6 +131,8 @@ export class MemStorage implements IStorage {
     const newUser: User = { 
       ...user, 
       id, 
+      areaId: user.areaId || null,
+      employeeId: user.employeeId || null,
       status: user.status !== undefined ? user.status : true, 
       createdAt: new Date() 
     };
@@ -292,6 +294,50 @@ export class MemStorage implements IStorage {
     return Array.from(this.documents.values());
   }
 
+  async getDocumentsByAreaId(areaId: number): Promise<Document[]> {
+    return Array.from(this.documents.values()).filter(doc => doc.currentAreaId === areaId);
+  }
+
+  async getDocumentsByUserId(userId: number): Promise<Document[]> {
+    const user = await this.getUser(userId);
+    if (!user) return [];
+    
+    // Se for administrador, retorna todos os documentos
+    if (user.role === "Administrator") {
+      return Array.from(this.documents.values());
+    }
+    
+    // Se tem área definida, filtra por área
+    if (user.areaId) {
+      return Array.from(this.documents.values()).filter(doc => doc.currentAreaId === user.areaId);
+    }
+    
+    return [];
+  }
+
+  async getAssignedDocuments(employeeId: number): Promise<Document[]> {
+    return Array.from(this.documents.values()).filter(doc => doc.currentEmployeeId === employeeId);
+  }
+
+  async canUserManageDocument(userId: number, documentId: number): Promise<boolean> {
+    const user = await this.getUser(userId);
+    const document = await this.getDocument(documentId);
+    
+    if (!user || !document) return false;
+    
+    // Administrador pode gerenciar qualquer documento
+    if (user.role === "Administrator") return true;
+    
+    // Se o documento está atribuído a um funcionário específico
+    if (document.currentEmployeeId) {
+      // Apenas o funcionário atribuído pode gerenciar
+      return user.employeeId === document.currentEmployeeId;
+    }
+    
+    // Se não há atribuição específica, qualquer usuário da área pode gerenciar
+    return user.areaId === document.currentAreaId;
+  }
+
   async updateDocument(id: number, document: Partial<InsertDocument>): Promise<Document | undefined> {
     const existingDocument = this.documents.get(id);
     if (!existingDocument) return undefined;
@@ -305,10 +351,6 @@ export class MemStorage implements IStorage {
     return this.documents.delete(id);
   }
 
-  async getDocumentsByAreaId(areaId: number): Promise<Document[]> {
-    return Array.from(this.documents.values()).filter(doc => doc.currentAreaId === areaId);
-  }
-  
   async getDocumentsByEmployeeId(employeeId: number): Promise<Document[]> {
     return Array.from(this.documents.values()).filter(doc => doc.currentEmployeeId === employeeId);
   }

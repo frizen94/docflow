@@ -392,10 +392,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Document Routes
   app.get("/api/documents", isAuthenticated, async (req, res) => {
     try {
-      const documents = await storage.listDocuments();
+      const userId = (req.user as any).id;
+      const documents = await storage.getDocumentsByUserId(userId);
       res.json(documents);
     } catch (error) {
       res.status(500).json({ error: "Failed to retrieve documents" });
+    }
+  });
+
+  app.get("/api/documents/assigned", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (!user.employeeId) {
+        return res.json([]);
+      }
+      
+      const documents = await storage.getAssignedDocuments(user.employeeId);
+      res.json(documents);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to retrieve assigned documents" });
     }
   });
 
@@ -620,13 +635,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/document-tracking", isAuthenticated, async (req, res) => {
     try {
       const trackingData = insertDocumentTrackingSchema.parse(req.body);
+      const userId = (req.user as any).id;
+      
+      // Validar se usuário pode movimentar o documento
+      const canManage = await storage.canUserManageDocument(userId, trackingData.documentId);
+      if (!canManage) {
+        return res.status(403).json({ 
+          error: "Você não tem permissão para movimentar este documento. Apenas o responsável atribuído pode movimentá-lo." 
+        });
+      }
+      
       const tracking = await storage.createDocumentTracking(trackingData);
       
-      // Update the current area of the document
+      // Update the current area and employee of the document
       const document = await storage.getDocument(tracking.documentId);
       if (document) {
         await storage.updateDocument(tracking.documentId, { 
-          currentAreaId: tracking.toAreaId 
+          currentAreaId: tracking.toAreaId,
+          currentEmployeeId: tracking.toEmployeeId
         });
       }
       

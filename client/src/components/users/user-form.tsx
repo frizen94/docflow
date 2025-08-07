@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertUserSchema, User, Employee } from "@shared/schema";
+import { insertUserSchema, User, Employee, Area } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -60,9 +60,13 @@ interface UserFormProps {
 export default function UserForm({ isOpen, onClose, editMode, user }: UserFormProps) {
   const { toast } = useToast();
 
-  // Fetch employees for name dropdown
+  // Fetch employees and areas for dropdowns
   const { data: employees, isLoading: isLoadingEmployees } = useQuery<Employee[]>({
     queryKey: ["/api/employees"],
+  });
+
+  const { data: areas, isLoading: isLoadingAreas } = useQuery<Area[]>({
+    queryKey: ["/api/areas"],
   });
 
   // Default values for the form
@@ -72,6 +76,8 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
     confirmPassword: "",
     name: "",
     role: "Usuário",
+    areaId: undefined,
+    employeeId: undefined,
     status: true,
   };
 
@@ -90,6 +96,8 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
         confirmPassword: "",
         name: user.name || "",
         role: user.role || "Usuário",
+        areaId: user.areaId || undefined,
+        employeeId: user.employeeId || undefined,
         status: user.status ?? true,
       });
     } else {
@@ -168,7 +176,70 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Funcionário</FormLabel>
+                  <FormLabel>Nome Completo</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="Digite o nome completo do usuário" 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="areaId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Área</FormLabel>
+                  {isLoadingAreas ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-muted-foreground">Carregando áreas...</span>
+                    </div>
+                  ) : areas && areas.length > 0 ? (
+                    <Select
+                      onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                      value={field.value?.toString() || ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma área" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Nenhuma área</SelectItem>
+                        {areas.map((area) => (
+                          <SelectItem 
+                            key={area.id} 
+                            value={area.id.toString()}
+                          >
+                            {area.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded-md">
+                      Nenhuma área cadastrada.
+                    </div>
+                  )}
+                  <FormDescription>
+                    Selecione a área do usuário para controle de acesso aos documentos.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="employeeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Funcionário Associado (Opcional)</FormLabel>
                   {isLoadingEmployees ? (
                     <div className="flex items-center space-x-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -176,8 +247,8 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                     </div>
                   ) : employees && employees.length > 0 ? (
                     <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
+                      value={field.value?.toString() || ""}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -185,10 +256,11 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="">Nenhum funcionário</SelectItem>
                         {employees.map((employee) => (
                           <SelectItem 
                             key={employee.id} 
-                            value={`${employee.firstName} ${employee.lastName}`}
+                            value={employee.id.toString()}
                           >
                             {`${employee.firstName} ${employee.lastName}`}
                           </SelectItem>
@@ -197,11 +269,11 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                     </Select>
                   ) : (
                     <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded-md">
-                      Nenhum funcionário cadastrado. Por favor cadastre funcionários primeiro.
+                      Nenhum funcionário cadastrado.
                     </div>
                   )}
                   <FormDescription>
-                    Selecione um funcionário da lista para associar a este usuário.
+                    Associe um funcionário para permitir atribuição de documentos específicos.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

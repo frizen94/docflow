@@ -12,6 +12,8 @@ import { format, differenceInDays, startOfMonth, endOfMonth, getDate, getDay, ad
 import { ptBR } from "date-fns/locale";
 import RecentActivity from "@/components/dashboard/recent-activity";
 import UpcomingDeadlines from "@/components/dashboard/upcoming-deadlines";
+import AssignedDocuments from "@/components/documents/assigned-documents";
+import { useAuth } from "@/hooks/use-auth";
 
 interface DashboardStats {
   totalDocuments: number;
@@ -21,6 +23,7 @@ interface DashboardStats {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
@@ -345,6 +348,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Documentos Atribuídos - apenas para usuários não-administradores */}
+      {user && user.role !== "Administrator" && (
+        <div className="mt-6">
+          <AssignedDocuments />
+        </div>
+      )}
     </div>
   );
 }

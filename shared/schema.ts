@@ -9,6 +9,8 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   role: text("role").notNull(), // 'Administrator' or 'Usuário'
+  areaId: integer("area_id"), // Área do usuário (para controle de acesso)
+  employeeId: integer("employee_id"), // Funcionário associado (opcional)
   status: boolean("status").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

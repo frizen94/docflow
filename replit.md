@@ -19,6 +19,11 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Automatic Process Numbers**: Implemented automatic generation in format PROC-YYYY-MM-DD-XXXX
 - ✅ **Deadline Control**: Added priority levels (Normal, Com Contagem de Prazo, Urgente) with automatic deadline calculation
 - ✅ **Document Tracking**: Implemented tracking numbers (TRK-YYYY-XXX) and complete audit trail
+- ✅ **Area-Based Access Control**: Users now only see documents from their assigned area
+- ✅ **Individual Document Assignment**: Documents can be assigned to specific employees within areas
+- ✅ **Permission-Based Movement**: Only assigned users can move their documents, with validation middleware
+- ✅ **Enhanced User Management**: Added area and employee association fields to user profiles
+- ✅ **Assigned Documents Dashboard**: Personal widget showing documents specifically assigned to the logged-in user
 - ✅ **Comprehensive Documentation**: Created detailed README.md with complete business rules and technical architecture
 
 ## System Architecture
@@ -49,6 +54,9 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Express sessions with memory store
 - **Password Security**: Scrypt-based password hashing with salt
 - **Role-Based Access**: Two roles (Administrator, Usuário) with middleware protection
+- **Area-Based Access Control**: Users can only view documents from their assigned area
+- **Individual Assignment System**: Documents can be assigned to specific employees within areas
+- **Permission Validation**: Middleware prevents unauthorized document movement
 - **Route Protection**: Frontend and backend route guards based on authentication status
 - **Initial Setup**: Automatic admin user creation if no administrators exist
 
