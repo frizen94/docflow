@@ -478,6 +478,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
+      // Converter deadline de string para Date se necessário
+      if (payload.deadline && typeof payload.deadline === 'string') {
+        payload.deadline = new Date(payload.deadline);
+      }
+      
       // Se folios não for enviado, defina com valor 1
       if (!payload.folios) {
         payload.folios = 1;
@@ -521,6 +526,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           payload[field] = Number(payload[field]);
         }
       });
+      
+      // Converter deadline de string para Date se necessário
+      if (payload.deadline && typeof payload.deadline === 'string') {
+        payload.deadline = new Date(payload.deadline);
+      }
       
       try {
         const documentData = insertDocumentSchema.partial().parse(payload);

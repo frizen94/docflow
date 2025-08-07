@@ -1,0 +1,109 @@
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+framework-904731c5b6fb1461.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-904731c5b6fb1461.js:1Understand this error
+framework-904731c5b6fb1461.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-904731c5b6fb1461.js:1Understand this error
+framework-904731c5b6fb1461.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-904731c5b6fb1461.js:1Understand this error
+framework-904731c5b6fb1461.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-904731c5b6fb1461.js:1Understand this error
+framework-904731c5b6fb1461.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-904731c5b6fb1461.js:1Understand this error
+framework-904731c5b6fb1461.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-904731c5b6fb1461.js:1Understand this error
+framework-904731c5b6fb1461.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-904731c5b6fb1461.js:1
+(anonymous) @ framework-904731c5b6fb1461.js:1
+uD @ framework-904731c5b6fb1461.js:1
+uI @ framework-904731c5b6fb1461.js:1
+uM @ framework-904731c5b6fb1461.js:1
+uS @ framework-904731c5b6fb1461.js:1
+C @ framework-904731c5b6fb1461.js:1
+z @ framework-904731c5b6fb1461.js:1Understand this error
+framework-904731c5b6fb1461.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-904731c5b6fb1461.js:1
+(anonymous) @ framework-904731c5b6fb1461.js:1
+uD @ framework-904731c5b6fb1461.js:1
+uI @ framework-904731c5b6fb1461.js:1
+uM @ framework-904731c5b6fb1461.js:1
+uS @ framework-904731c5b6fb1461.js:1
+C @ framework-904731c5b6fb1461.js:1
+z @ framework-904731c5b6fb1461.js:1Understand this error
+framework-904731c5b6fb1461.js:1 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-904731c5b6fb1461.js:1Understand this error
+workspace_iframe.html:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'battery'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+framework-904731c5b6fb1461.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-904731c5b6fb1461.js:1Understand this warning
+_app-23bcc5394bd16dd4.js:13 onClick is deprecated, please use onPress
+push.23468.e2 @ _app-23bcc5394bd16dd4.js:13Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'battery'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+d7efbb78-61f8-4193-8171-8672fb1c8987-00-21kchyp1fpq76.janeway.replit.dev/api/session:1  Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+Console.js:61 Save button clicked
+Console.js:61 Form state: Object
+Console.js:61 Form errors: Object
+Console.js:61 Form values: Object
+Console.js:61 Save button clicked
+Console.js:61 Form state: Object
+Console.js:61 Form errors: Object
+Console.js:61 Form values: Object
+Console.js:61 === FORM SUBMISSION STARTED ===
+Console.js:61 Form values before submission: Object
+Console.js:61 Uploading file: 2d0dd144-8468-4067-ad89-2dc80455d0b51754504058.402503.docx
+Console.js:61 File uploaded successfully: Object
+Console.js:61 Submitting document with data: Object
+Console.js:61 === CALLING MUTATION ===
+Console.js:61 Final payload for document creation: Object
+d7efbb78-61f8-4193-8171-8672fb1c8987-00-21kchyp1fpq76.janeway.replit.dev/api/documents:1  Failed to load resource: the server responded with a status of 400 (Bad Request)Understand this error
+Console.js:61 Save button clicked
+Console.js:61 Form state: {defaultValues: {…}, …}
+Console.js:61 Form errors: {}
+Console.js:61 Form values: {documentNumber: '', documentTypeId: 1, originAreaId: 3, currentAreaId: 2, subject: 'Teste1', …}
+Console.js:61 === FORM SUBMISSION STARTED ===
+Console.js:61 Form values before submission: {documentNumber: '', documentTypeId: 1, originAreaId: 3, currentAreaId: 2, status: 'Pending', …}
+Console.js:61 Uploading file: 2d0dd144-8468-4067-ad89-2dc80455d0b51754504058.402503.docx
+Console.js:61 File uploaded successfully: {success: true, filePath: '/home/runner/workspace/uploads/file-1754571995065-149751065.docx', fileName: '2d0dd144-8468-4067-ad89-2dc80455d0b51754504058.402503.docx'}
+Console.js:61 Submitting document with data: {documentNumber: '', documentTypeId: 1, originAreaId: 3, currentAreaId: 2, status: 'Pending', …}
+Console.js:61 === CALLING MUTATION ===
+Console.js:61 Final payload for document creation: {documentNumber: 'PROC-2025-08-07-9596', documentTypeId: 1, originAreaId: 3, currentAreaId: 2, status: 'Pending', …}
+queryClient.ts:15  POST https://d7efbb78-61f8-4193-8171-8672fb1c8987-00-21kchyp1fpq76.janeway.replit.dev/api/documents 400 (Bad Request)
