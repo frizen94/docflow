@@ -65,7 +65,7 @@ function Router() {
         </Layout>
       </ProtectedRoute>
       
-      <ProtectedRoute path="/users" adminOnly>
+      <ProtectedRoute path="/users">
         <Layout>
           <Users />
         </Layout>

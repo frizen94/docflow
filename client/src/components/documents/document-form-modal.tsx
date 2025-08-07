@@ -242,50 +242,50 @@ export default function DocumentFormModal({
   };
 
   // Handle form submission
-  const onSubmit = (values: DocumentFormValues) => {
-    // Log form values for debugging
-    console.log("Form values before submission:", values);
-    
-    // Create FormData for file upload
-    const formData = new FormData();
-    
-    // Append file if selected
-    if (selectedFile) {
-      formData.append("file", selectedFile);
-      console.log("Uploading file:", selectedFile.name);
+  const onSubmit = async (values: DocumentFormValues) => {
+    try {
+      console.log("Form values before submission:", values);
       
-      // Upload file first
-      fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      })
-        .then(response => {
-          console.log("File upload response status:", response.status);
-          return response.json();
-        })
-        .then(data => {
-          console.log("File upload response data:", data);
-          // If file upload successful, add the file path to the document data
-          const valuesWithFile = {
-            ...values,
-            filePath: data.filePath
-          };
-          console.log("Submitting form with file:", valuesWithFile);
-          mutation.mutate(valuesWithFile);
-        })
-        .catch(error => {
-          console.error("Error uploading file:", error);
-          toast({
-            title: "Erro ao enviar arquivo",
-            description: "Ocorreu um erro ao enviar o arquivo. Por favor, tente novamente.",
-            variant: "destructive",
-          });
+      let filePath = "";
+      
+      // Upload file first if selected
+      if (selectedFile) {
+        console.log("Uploading file:", selectedFile.name);
+        
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
         });
-    } else {
-      console.log("Submitting form without file:", values);
-      // If no file, just submit the form data
-      mutation.mutate(values);
+        
+        if (!uploadResponse.ok) {
+          throw new Error("Erro ao enviar arquivo");
+        }
+        
+        const uploadData = await uploadResponse.json();
+        filePath = uploadData.filePath;
+        console.log("File uploaded successfully:", uploadData);
+      }
+      
+      // Submit document with file path
+      const finalValues = {
+        ...values,
+        filePath
+      };
+      
+      console.log("Submitting document with data:", finalValues);
+      mutation.mutate(finalValues);
+      
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar o documento. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
