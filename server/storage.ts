@@ -281,6 +281,7 @@ export class MemStorage implements IStorage {
       deadline: document.deadline || null,
       deadlineDays: document.deadlineDays || null,
       currentEmployeeId: document.currentEmployeeId || null,
+      priority: document.priority || "Normal",
       createdAt: new Date() 
     };
     this.documents.set(id, newDocument);
