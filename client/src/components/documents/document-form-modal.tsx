@@ -244,6 +244,7 @@ export default function DocumentFormModal({
   // Handle form submission
   const onSubmit = async (values: DocumentFormValues) => {
     try {
+      console.log("=== FORM SUBMISSION STARTED ===");
       console.log("Form values before submission:", values);
       
       let filePath = "";
@@ -277,6 +278,7 @@ export default function DocumentFormModal({
       };
       
       console.log("Submitting document with data:", finalValues);
+      console.log("=== CALLING MUTATION ===");
       mutation.mutate(finalValues);
       
     } catch (error) {
@@ -529,6 +531,14 @@ export default function DocumentFormModal({
                 <Button
                   type="submit"
                   disabled={mutation.isPending}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log("Save button clicked");
+                    console.log("Form state:", form.formState);
+                    console.log("Form errors:", form.formState.errors);
+                    console.log("Form values:", form.getValues());
+                    form.handleSubmit(onSubmit)();
+                  }}
                 >
                   {mutation.isPending ? "Salvando..." : editMode ? "Atualizar" : "Salvar"}
                 </Button>
