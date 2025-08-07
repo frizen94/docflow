@@ -14,7 +14,18 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function verifyPassword(storedPassword: string, suppliedPassword: string): Promise<boolean> {
+  // Check if password contains a salt (has a dot)
+  if (!storedPassword.includes(".")) {
+    // Plain text password comparison (for initial admin user)
+    return storedPassword === suppliedPassword;
+  }
+  
   const [hashedPassword, salt] = storedPassword.split(".");
+  if (!salt) {
+    // Invalid format, compare as plain text
+    return storedPassword === suppliedPassword;
+  }
+  
   const buf = (await scryptAsync(suppliedPassword, salt, 64)) as Buffer;
   const suppliedHashedPassword = buf.toString("hex");
   return hashedPassword === suppliedHashedPassword;

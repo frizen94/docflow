@@ -97,20 +97,24 @@ export class MemStorage implements IStorage {
     this.createUser({ 
       username: "admin", 
       password: "admin123", 
-      name: "Admin User", 
+      name: "Administrador", 
       role: "Administrator", 
       status: true 
     });
     
     // Initialize with some default areas
-    this.createArea({ name: "Finance", status: true });
-    this.createArea({ name: "Human Resources", status: true });
-    this.createArea({ name: "Legal", status: true });
+    this.createArea({ name: "Financeiro", status: true });
+    this.createArea({ name: "Recursos Humanos", status: true });
+    this.createArea({ name: "Jurídico", status: true });
+    this.createArea({ name: "Tecnologia da Informação", status: true });
+    this.createArea({ name: "Direção Geral", status: true });
     
     // Initialize with some default document types
-    this.createDocumentType({ name: "Invoice", status: true });
-    this.createDocumentType({ name: "Contract", status: true });
-    this.createDocumentType({ name: "Report", status: true });
+    this.createDocumentType({ name: "Ofício", status: true });
+    this.createDocumentType({ name: "Memorando", status: true });
+    this.createDocumentType({ name: "Processo Administrativo", status: true });
+    this.createDocumentType({ name: "Relatório", status: true });
+    this.createDocumentType({ name: "Solicitação", status: true });
   }
 
   // User operations
