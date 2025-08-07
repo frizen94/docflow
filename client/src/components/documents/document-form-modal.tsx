@@ -47,6 +47,7 @@ const documentFormSchema = insertDocumentSchema
     }).optional(),
     filePath: z.string().optional().transform(val => val || ''),
     priority: z.enum(["Normal", "Com Contagem de Prazo", "Urgente"]).default("Normal"),
+    subject: z.string().min(1, "O assunto é obrigatório"),
   })
   .omit({ trackingNumber: true, deadline: true, folios: true });
 
@@ -117,6 +118,7 @@ export default function DocumentFormModal({
         deadlineDays: deadlineDays,
         filePath: document.filePath || "",
         priority: validatePriority(document.priority),
+        createdBy: document.createdBy,
       };
     }
 
@@ -134,6 +136,7 @@ export default function DocumentFormModal({
       deadlineDays: 5,
       filePath: "",
       priority: "Normal",
+      createdBy: user?.id || 1,
     };
   };
 
