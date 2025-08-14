@@ -13,7 +13,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, FileText, User, Building, CornerDownRight, Clipboard, SendIcon, HistoryIcon, Download, Paperclip } from "lucide-react";
+import { ArrowLeft, FileText, User, Building, CornerDownRight, Clipboard, SendIcon, HistoryIcon, Download, Paperclip, FolderOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -166,24 +166,50 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setLocation("/documents")}
-          className="mr-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Voltar para Documentos
-        </Button>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Detalhes do Documento
-          {document && (
-            <span className="ml-2 text-gray-500 font-normal text-lg">
-              {document.trackingNumber}
-            </span>
-          )}
-        </h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setLocation("/documents")}
+            className="mr-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Voltar para Documentos
+          </Button>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Detalhes do Documento
+            {document && (
+              <span className="ml-2 text-gray-500 font-normal text-lg">
+                {document.trackingNumber}
+              </span>
+            )}
+          </h1>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="default"
+            onClick={() => setLocation(`/process/${id}`)}
+          >
+            <FolderOpen className="h-4 w-4 mr-2" />
+            Ver Processo Completo
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowTrackingModal(true)}
+          >
+            <HistoryIcon className="h-4 w-4 mr-2" />
+            Ver Histórico
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowEditForm(true)}
+          >
+            <Clipboard className="h-4 w-4 mr-2" />
+            Editar Documento
+          </Button>
+        </div>
       </div>
 
       {isLoadingDocument ? (
@@ -295,37 +321,7 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
                     </div>
                   </div>
                   
-                  {document.filePath && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Anexo</p>
-                      <div className="flex items-center mt-1">
-                        <Paperclip className="h-4 w-4 mr-1 text-gray-500" />
-                        {document.filePath ? (
-                          <>
-                            <a
-                              href={`/api/files/${document.filePath.split('/').pop()}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary-600 hover:text-primary-500 inline-flex items-center mr-3"
-                            >
-                              {document.filePath.split('/').pop() || "Anexo do documento"}
-                            </a>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              className="ml-2 h-7 px-2"
-                              onClick={() => document.filePath && window.open(`/api/files/${document.filePath.split('/').pop()}`, '_blank')}
-                            >
-                              <Download className="h-3.5 w-3.5 mr-1" />
-                              Baixar
-                            </Button>
-                          </>
-                        ) : (
-                          <span className="text-gray-500">Nenhum arquivo anexado</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
+
                 </div>
               </CardContent>
             </Card>

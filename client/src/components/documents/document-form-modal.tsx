@@ -116,7 +116,7 @@ export default function DocumentFormModal({
         status: document.status || "Pending",
         subject: document.subject || "",
         deadlineDays: deadlineDays,
-        filePath: document.filePath || "",
+
         priority: validatePriority(document.priority),
         createdBy: document.createdBy,
       };
@@ -134,7 +134,7 @@ export default function DocumentFormModal({
       subject: "",
       status: "Pending",
       deadlineDays: 5,
-      filePath: "",
+
       priority: "Normal",
       createdBy: user?.id || 1,
     };

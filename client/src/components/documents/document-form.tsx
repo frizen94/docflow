@@ -42,6 +42,7 @@ const documentFormSchema = insertDocumentSchema
     deadlineDays: z.number().int().min(1, {
       message: "O prazo deve ser de pelo menos 1 dia",
     }).optional(),
+    priority: z.string().default("Normal"),
   })
   .omit({ trackingNumber: true, deadline: true });
 
@@ -97,6 +98,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
         status: document.status || "Pending",
         subject: document.subject || "",
         folios: document.folios || 1,
+        priority: document.priority || "Normal",
         deadlineDays: deadlineDays,
       };
     }
@@ -113,6 +115,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
       subject: "",
       status: "Pending",
       folios: 1,
+      priority: "Normal",
       deadlineDays: 5,
     };
   };
@@ -423,26 +426,51 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
 
                 <FormField
                   control={form.control}
-                  name="deadlineDays"
+                  name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Prazo em Dias</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          min={1}
-                          placeholder="Digite o número de dias para o prazo"
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Data final calculada: {format(addDays(new Date(), field.value || 0), "dd/MM/yyyy")}
-                      </FormDescription>
+                      <FormLabel>Prioridade</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a prioridade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Normal">Normal</SelectItem>
+                          <SelectItem value="Com Contagem de Prazo">Com Contagem de Prazo</SelectItem>
+                          <SelectItem value="Urgente">Urgente</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {form.watch("priority") === "Com Contagem de Prazo" && (
+                  <FormField
+                    control={form.control}
+                    name="deadlineDays"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prazo em Dias</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min={1}
+                            placeholder="Digite o número de dias para o prazo"
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Data final calculada: {format(addDays(new Date(), field.value || 0), "dd/MM/yyyy")}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {/* File Upload Control */}
                 <div className="mt-4">
