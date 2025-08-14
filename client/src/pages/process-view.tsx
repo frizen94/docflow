@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -35,6 +35,16 @@ export default function ProcessView({}: ProcessViewProps) {
   const handleGoBack = () => {
     setLocation(`/documents/${id}`);
   };
+
+  // Auto-select first attachment when attachments load
+  useEffect(() => {
+    if (attachments && attachments.length > 0 && !selectedAttachment) {
+      // Priorizar documento principal, senão pegar o primeiro
+      const principalDoc = attachments.find(att => att.category === "Principal");
+      const firstDoc = principalDoc || attachments[0];
+      setSelectedAttachment(firstDoc);
+    }
+  }, [attachments, selectedAttachment]);
 
   // Buscar dados do documento
   const { data: document, isLoading: loadingDocument } = useQuery({
@@ -173,10 +183,10 @@ export default function ProcessView({}: ProcessViewProps) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
           {/* Coluna Esquerda - Informações e Timeline */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-4 overflow-y-auto max-h-full">
             {/* Informações do Processo */}
             <Card>
               <CardHeader>
@@ -334,18 +344,18 @@ export default function ProcessView({}: ProcessViewProps) {
           </div>
 
           {/* Coluna Direita - Visualizador de Documento */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-6">
-              <CardHeader>
+          <div className="flex flex-col h-full">
+            <Card className="flex-1 flex flex-col h-full">
+              <CardHeader className="flex-shrink-0">
                 <CardTitle className="flex items-center gap-2">
                   <Eye className="h-5 w-5" />
                   Visualizador de Documento
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1 flex flex-col">
                 {selectedAttachment ? (
-                  <div className="space-y-4">
-                    <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="space-y-4 flex-1 flex flex-col">
+                    <div className="p-3 bg-gray-50 rounded-lg flex-shrink-0">
                       <p className="text-sm font-medium text-gray-900">
                         {selectedAttachment.originalName}
                       </p>
@@ -355,13 +365,21 @@ export default function ProcessView({}: ProcessViewProps) {
                       </p>
                     </div>
                     
-                    {/* Visualizador de PDF */}
+                    {/* Visualizador de PDF expandido */}
                     {selectedAttachment.mimeType === 'application/pdf' ? (
-                      <div className="border rounded-lg overflow-hidden">
+                      <div className="border rounded-lg overflow-hidden flex-1">
                         <iframe
                           src={`/api/attachments/${selectedAttachment.id}/download`}
-                          className="w-full h-96"
+                          className="w-full h-full min-h-[600px]"
                           title={selectedAttachment.originalName}
+                        />
+                      </div>
+                    ) : selectedAttachment.mimeType?.startsWith('image/') ? (
+                      <div className="border rounded-lg overflow-hidden flex-1 flex items-center justify-center">
+                        <img
+                          src={`/api/attachments/${selectedAttachment.id}/download`}
+                          alt={selectedAttachment.originalName}
+                          className="max-w-full max-h-full object-contain"
                         />
                       </div>
                     ) : (
@@ -382,7 +400,7 @@ export default function ProcessView({}: ProcessViewProps) {
                     )}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-gray-500 flex-1 flex items-center justify-center flex-col">
                     <Eye className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                     <p>Selecione um documento para visualizar</p>
                   </div>
