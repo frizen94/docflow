@@ -1,5 +1,15 @@
 # DocFlow - Sistema de Gestão de Documentos
 
+![DocFlow Logo](https://img.shields.io/badge/DocFlow-Document%20Management-blue)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green)
+![React](https://img.shields.io/badge/React-18+-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue)
+
+## 🚀 Sobre o Projeto
+
+DocFlow é um sistema completo de gestão de documentos desenvolvido especificamente para organizações brasileiras. Inspirado no PJE (Processo Judicial Eletrônico), oferece funcionalidades avançadas de tramitação, controle de prazos e auditoria completa.
+
 ## Visão Geral
 
 O DocFlow é um sistema completo de gestão de documentos e fluxo de trabalho desenvolvido para organizações brasileiras. O sistema permite o registro, acompanhamento e gerenciamento de documentos através de áreas organizacionais com trilhas de auditoria detalhadas e monitoramento de prazos.
