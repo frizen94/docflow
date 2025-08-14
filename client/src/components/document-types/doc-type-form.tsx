@@ -105,6 +105,12 @@ export default function DocTypeForm({ isOpen, onClose, editMode, docType }: DocT
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editMode ? "Editar Tipo de Documento" : "Adicionar Novo Tipo de Documento"}</DialogTitle>
+          <DialogDescription>
+            {editMode 
+              ? "Modifique as informações do tipo de documento conforme necessário." 
+              : "Preencha as informações para criar um novo tipo de documento no sistema."
+            }
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

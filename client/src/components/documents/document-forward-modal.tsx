@@ -9,6 +9,7 @@ import { Area, Employee } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter
@@ -181,6 +182,9 @@ export default function DocumentForwardModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Encaminhar Documento</DialogTitle>
+          <DialogDescription>
+            Escolha o destino para encaminhar o documento. Você pode encaminhar para uma área ou para um funcionário específico.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

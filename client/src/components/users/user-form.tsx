@@ -150,6 +150,12 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{editMode ? "Editar Usuário" : "Adicionar Novo Usuário"}</DialogTitle>
+          <DialogDescription>
+            {editMode 
+              ? "Modifique as informações do usuário conforme necessário." 
+              : "Preencha as informações para criar um novo usuário no sistema."
+            }
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -201,8 +207,8 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                     </div>
                   ) : areas && areas.length > 0 ? (
                     <Select
-                      onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
-                      value={field.value?.toString() || ""}
+                      onValueChange={(value) => field.onChange(value === "none" ? undefined : Number(value))}
+                      value={field.value?.toString() || "none"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -210,7 +216,7 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhuma área</SelectItem>
+                        <SelectItem value="none">Nenhuma área</SelectItem>
                         {areas.map((area) => (
                           <SelectItem 
                             key={area.id} 
@@ -247,8 +253,8 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                     </div>
                   ) : employees && employees.length > 0 ? (
                     <Select
-                      onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
-                      value={field.value?.toString() || ""}
+                      onValueChange={(value) => field.onChange(value === "none" ? undefined : Number(value))}
+                      value={field.value?.toString() || "none"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -256,7 +262,7 @@ export default function UserForm({ isOpen, onClose, editMode, user }: UserFormPr
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhum funcionário</SelectItem>
+                        <SelectItem value="none">Nenhum funcionário</SelectItem>
                         {employees.map((employee) => (
                           <SelectItem 
                             key={employee.id} 
