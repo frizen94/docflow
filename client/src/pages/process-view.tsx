@@ -36,16 +36,6 @@ export default function ProcessView({}: ProcessViewProps) {
     setLocation(`/documents/${id}`);
   };
 
-  // Auto-select first attachment when attachments load
-  useEffect(() => {
-    if (attachments && attachments.length > 0 && !selectedAttachment) {
-      // Priorizar documento principal, senão pegar o primeiro
-      const principalDoc = attachments.find(att => att.category === "Principal");
-      const firstDoc = principalDoc || attachments[0];
-      setSelectedAttachment(firstDoc);
-    }
-  }, [attachments, selectedAttachment]);
-
   // Buscar dados do documento
   const { data: document, isLoading: loadingDocument } = useQuery({
     queryKey: ["document", id],
@@ -74,6 +64,16 @@ export default function ProcessView({}: ProcessViewProps) {
     },
     enabled: !!id,
   });
+
+  // Auto-select first attachment when attachments load
+  useEffect(() => {
+    if (!loadingAttachments && attachments && attachments.length > 0 && !selectedAttachment) {
+      // Priorizar documento principal, senão pegar o primeiro
+      const principalDoc = attachments.find(att => att.category === "Principal");
+      const firstDoc = principalDoc || attachments[0];
+      setSelectedAttachment(firstDoc);
+    }
+  }, [attachments, selectedAttachment, loadingAttachments]);
 
   const toggleTracking = (trackingId: number) => {
     const newExpanded = new Set(expandedTrackings);

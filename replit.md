@@ -33,6 +33,9 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Final Fixes**: Fixed file attachment display and deadline field functionality in forms
 - ✅ **Process Navigation**: Added back button in process view to return to document details
 - ✅ **Project Migration**: Successfully migrated from Replit Agent to standard Replit environment
+- ✅ **PJE-Style Document Viewer**: Implemented automatic selection of first document when page loads
+- ✅ **Expanded Document Viewer**: Changed layout to 2-column format with document viewer occupying large portion of screen
+- ✅ **Enhanced Viewer Layout**: Full-height document viewer with support for PDFs (iframe) and images (optimized display)
 
 ## System Architecture
 
