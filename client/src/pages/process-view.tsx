@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Document, DocumentAttachment, DocumentTracking } from "@shared/schema";
@@ -18,7 +18,8 @@ import {
   Eye,
   ChevronDown,
   ChevronRight,
-  Paperclip
+  Paperclip,
+  ArrowLeft
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -27,8 +28,13 @@ interface ProcessViewProps {}
 
 export default function ProcessView({}: ProcessViewProps) {
   const { id } = useParams();
+  const [, setLocation] = useLocation();
   const [selectedAttachment, setSelectedAttachment] = useState<DocumentAttachment | null>(null);
   const [expandedTrackings, setExpandedTrackings] = useState<Set<number>>(new Set());
+
+  const handleGoBack = () => {
+    setLocation(`/documents/${id}`);
+  };
 
   // Buscar dados do documento
   const { data: document, isLoading: loadingDocument } = useQuery({
@@ -141,13 +147,24 @@ export default function ProcessView({}: ProcessViewProps) {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Processo {document.documentNumber}
-              </h1>
-              <p className="text-sm text-gray-500">
-                Código de Rastreamento: {document.trackingNumber}
-              </p>
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleGoBack}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Voltar aos Detalhes</span>
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Processo {document.documentNumber}
+                </h1>
+                <p className="text-sm text-gray-500">
+                  Código de Rastreamento: {document.trackingNumber}
+                </p>
+              </div>
             </div>
             <Badge className={getStatusColor(document.status)}>
               {document.status}
