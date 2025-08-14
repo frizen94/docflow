@@ -39,7 +39,7 @@ docflow/
 1. Acesse: https://github.com/frizen94
 2. Clique em "New repository"
 3. Nome: `docflow`
-4. Descrição: `Sistema completo de gestão de documentos inspirado no PJE`
+4. Descrição: `Sistema completo de gestão de documentos`
 5. Público/Privado conforme preferir
 6. **NÃO** adicione README/LICENSE (já temos)
 

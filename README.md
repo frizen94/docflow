@@ -8,7 +8,7 @@
 
 ## 🚀 Sobre o Projeto
 
-DocFlow é um sistema completo de gestão de documentos desenvolvido especificamente para organizações brasileiras. Inspirado no PJE (Processo Judicial Eletrônico), oferece funcionalidades avançadas de tramitação, controle de prazos e auditoria completa.
+DocFlow é um sistema completo de gestão de documentos desenvolvido especificamente para organizações brasileiras. Oferece funcionalidades avançadas de tramitação, controle de prazos e auditoria completa.
 
 ## Visão Geral
 

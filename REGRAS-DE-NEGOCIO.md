@@ -225,7 +225,7 @@ Todo documento criado recebe automaticamente:
 ### 4.3. Sistema de Anexos e Gestão de Arquivos
 
 #### 4.3.1. Estrutura de Armazenamento por Processo
-O sistema implementa uma estrutura de pastas organizadas por número de processo, similar ao sistema PJe (Processo Judicial Eletrônico):
+O sistema implementa uma estrutura de pastas organizadas por número de processo:
 
 **Estrutura de Diretórios:**
 ```
