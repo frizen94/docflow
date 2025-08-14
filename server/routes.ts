@@ -793,6 +793,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dashboard detailed stats
+  app.get("/api/dashboard/detailed-stats", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      // Buscar estatísticas detalhadas
+      const allDocuments = await storage.listDocuments();
+      const pendingDocuments = allDocuments.filter(d => d.status === 'Pending');
+      const urgentDocuments = allDocuments.filter(d => d.priority === 'Urgente');
+      const inAnalysisDocuments = allDocuments.filter(d => d.status === 'Em Análise');
+      const completedDocuments = allDocuments.filter(d => d.status === 'Completed');
+      const unassignedDocuments = allDocuments.filter(d => !d.currentEmployeeId);
+      
+      // Documentos com prazo próximo (próximos 7 dias)
+      const now = new Date();
+      const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const upcomingDeadlines = allDocuments.filter(d => {
+        if (!d.deadline) return false;
+        const deadline = new Date(d.deadline);
+        return deadline >= now && deadline <= nextWeek;
+      });
+      
+      // Documentos por área (se for admin)
+      let documentsByArea = [];
+      if (user.role === 'Administrator') {
+        const areas = await storage.listAreas();
+        documentsByArea = areas.map(area => ({
+          areaName: area.name,
+          count: allDocuments.filter(d => d.currentAreaId === area.id).length
+        }));
+      }
+      
+      // Documentos recentes (últimos 30 dias)
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const recentDocuments = allDocuments.filter(d => {
+        const createdAt = new Date(d.createdAt);
+        return createdAt >= thirtyDaysAgo;
+      });
+      
+      res.json({
+        totalDocuments: allDocuments.length,
+        pendingDocuments: pendingDocuments.length,
+        urgentDocuments: urgentDocuments.length,
+        inAnalysisDocuments: inAnalysisDocuments.length,
+        completedDocuments: completedDocuments.length,
+        documentsToAssign: unassignedDocuments.length,
+        upcomingDeadlines: upcomingDeadlines.length,
+        upcomingDeadlinesList: upcomingDeadlines,
+        documentsByArea,
+        recentDocumentsCount: recentDocuments.length,
+        recentDocumentsList: recentDocuments.slice(0, 10) // Últimos 10
+      });
+    } catch (error) {
+      console.error('Dashboard detailed stats error:', error);
+      res.status(500).json({ error: "Failed to retrieve detailed dashboard stats" });
+    }
+  });
+
+  // Calendar events - documentos com prazo no mês
+  app.get("/api/dashboard/calendar/:year/:month", isAuthenticated, async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      // Buscar todos os documentos
+      const allDocuments = await storage.listDocuments();
+      
+      // Filtrar documentos com deadline no mês especificado
+      const documentsInMonth = allDocuments.filter(doc => {
+        if (!doc.deadline) return false;
+        const deadline = new Date(doc.deadline);
+        return deadline.getFullYear() === year && deadline.getMonth() === month - 1;
+      });
+      
+      // Agrupar por dia
+      const calendarEvents = documentsInMonth.reduce((acc: any, doc: any) => {
+        const day = new Date(doc.deadline).getDate();
+        if (!acc[day]) {
+          acc[day] = [];
+        }
+        acc[day].push({
+          id: doc.id,
+          documentNumber: doc.documentNumber,
+          subject: doc.subject,
+          priority: doc.priority,
+          deadline: doc.deadline
+        });
+        return acc;
+      }, {});
+      
+      res.json(calendarEvents);
+    } catch (error) {
+      console.error('Calendar events error:', error);
+      res.status(500).json({ error: "Failed to retrieve calendar events" });
+    }
+  });
+
+  // Processos em análise por tempo
+  app.get("/api/dashboard/analysis-by-time", isAuthenticated, async (req, res) => {
+    try {
+      const allDocuments = await storage.listDocuments();
+      const inAnalysisDocuments = allDocuments.filter(d => d.status === 'Em Análise');
+      
+      const documentsWithTime = inAnalysisDocuments.map(doc => {
+        const createdAt = new Date(doc.createdAt);
+        const now = new Date();
+        const daysInAnalysis = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+        
+        return {
+          id: doc.id,
+          documentNumber: doc.documentNumber,
+          subject: doc.subject,
+          daysInAnalysis,
+          priority: doc.priority
+        };
+      });
+      
+      res.json(documentsWithTime);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to retrieve analysis time data" });
+    }
+  });
+
   // Document Attachments Routes
   app.get("/api/documents/:documentId/attachments", isAuthenticated, async (req, res) => {
     try {

@@ -22,15 +22,66 @@ interface DashboardStats {
   totalUsers: number;
 }
 
+interface DetailedStats {
+  totalDocuments: number;
+  pendingDocuments: number;
+  urgentDocuments: number;
+  inAnalysisDocuments: number;
+  completedDocuments: number;
+  documentsToAssign: number;
+  upcomingDeadlines: number;
+  upcomingDeadlinesList: Array<{
+    id: number;
+    documentNumber: string;
+    subject: string;
+    priority: string;
+    deadline: string;
+  }>;
+  documentsByArea: Array<{
+    areaName: string;
+    count: number;
+  }>;
+  recentDocumentsCount: number;
+  recentDocumentsList: Array<{
+    id: number;
+    documentNumber: string;
+    subject: string;
+    createdAt: string;
+  }>;
+}
+
+interface CalendarEvents {
+  [day: number]: Array<{
+    id: number;
+    documentNumber: string;
+    subject: string;
+    priority: string;
+    deadline: string;
+  }>;
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
-  const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ["/api/dashboard/stats"],
-  });
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const [visaoTipo, setVisaoTipo] = useState<"individual" | "setor" | "setor_e_subordinados">("individual");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
+    queryKey: ["/api/dashboard/stats"],
+  });
+  
+  const { data: detailedStats, isLoading: isLoadingDetailed } = useQuery<DetailedStats>({
+    queryKey: ["/api/dashboard/detailed-stats"],
+  });
+  
+  const { data: calendarEvents } = useQuery<CalendarEvents>({
+    queryKey: ["/api/dashboard/calendar", currentMonth.getFullYear(), currentMonth.getMonth() + 1],
+  });
+  
+  const { data: analysisData } = useQuery({
+    queryKey: ["/api/dashboard/analysis-by-time"],
+  });
   
   // Meses em pt-BR
   const monthName = format(currentMonth, 'MMMM yyyy', { locale: ptBR });
@@ -74,15 +125,11 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
-                  <h1 className="text-xl font-medium mb-2">Seja bem-vindo (a), José!</h1>
-                  <p className="text-gray-500 text-sm">
-                    O sistema foi atualizado dia 15/03/2025, com uma nova versão 1.3.7.0. 
-                    <button 
-                      className="ml-1 text-primary-600 hover:underline" 
-                      onClick={() => toast({ title: "Ajuda", description: "Clique aqui para ver as melhorias" })}
-                    >
-                      Clique aqui e veja as melhorias.
-                    </button>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Seja bem-vindo(a), {user?.name}!
+                  </h1>
+                  <p className="text-gray-600 mt-1">
+                    O sistema foi atualizado dia {format(new Date(), "dd/MM/yyyy", { locale: ptBR })}, com uma nova versão 1.0.0. Sistema DocFlow operacional.
                   </p>
                 </div>
                 <button
@@ -130,25 +177,25 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatusCard 
           title="Processos com prazo" 
-          value={stats?.approachingDeadline || 0} 
+          value={detailedStats?.upcomingDeadlines || 0} 
           icon={<Clock className="h-5 w-5 text-amber-500" />} 
           badgeColor="bg-amber-100 text-amber-500"
         />
         <StatusCard 
           title="Processos urgentes" 
-          value={stats?.approachingDeadline || 0} 
+          value={detailedStats?.urgentDocuments || 0} 
           icon={<FileText className="h-5 w-5 text-red-500" />} 
           badgeColor="bg-red-100 text-red-500"
         />
         <StatusCard 
           title="Processos em análise" 
-          value={stats ? (stats.totalDocuments - (stats.completedDocuments || 0)) : 0} 
+          value={detailedStats?.inAnalysisDocuments || 0} 
           icon={<FileSignature className="h-5 w-5 text-green-500" />} 
           badgeColor="bg-green-100 text-green-500"
         />
         <StatusCard 
           title="Documentos para assinar" 
-          value={0} 
+          value={detailedStats?.documentsToAssign || 0} 
           icon={<FileCheck2 className="h-5 w-5 text-blue-500" />} 
           badgeColor="bg-blue-100 text-blue-500"
         />
@@ -193,15 +240,33 @@ export default function Dashboard() {
               <div className="text-xs text-gray-500">Sex</div>
               <div className="text-xs text-gray-500">Sáb</div>
               
-              {days.map((day, index) => (
-                <div key={index} className={`h-8 text-xs flex items-center justify-center ${
-                  day === 7 ? 'bg-gray-100 rounded-full border border-gray-200' : ''
-                } ${
-                  day === null ? 'opacity-0' : ''
-                }`}>
-                  {day}
-                </div>
-              ))}
+              {days.map((day, index) => {
+                const hasEvents = day && calendarEvents && calendarEvents[day] && calendarEvents[day].length > 0;
+                const eventCount = hasEvents ? calendarEvents[day].length : 0;
+                const today = new Date();
+                const isToday = day === today.getDate() && 
+                               currentMonth.getMonth() === today.getMonth() && 
+                               currentMonth.getFullYear() === today.getFullYear();
+                
+                return (
+                  <div key={index} className={`h-8 text-xs flex items-center justify-center relative ${
+                    isToday ? 'bg-blue-100 rounded-full border border-blue-300 text-blue-700 font-medium' : ''
+                  } ${
+                    hasEvents ? 'bg-red-100 rounded-full border border-red-200 text-red-700' : ''
+                  } ${
+                    day === null ? 'opacity-0' : ''
+                  } ${
+                    day && !hasEvents && !isToday ? 'hover:bg-gray-50 cursor-pointer' : ''
+                  }`}>
+                    {day}
+                    {hasEvents && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
+                        {eventCount}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -227,17 +292,29 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(stats && stats.totalDocuments > 0) ? (
-                      Array(2).fill(0).map((_, i) => (
-                        <tr 
-                          key={i} 
-                          className="border-t cursor-pointer hover:bg-gray-50"
-                          onClick={() => setLocation(`/documents/${i+10}`)}
-                        >
-                          <td className="text-xs px-2 py-2 text-primary hover:underline">Ofício nº {1000+i}/2025</td>
-                          <td className="text-xs text-right px-2 py-2">{i+3}</td>
-                        </tr>
-                      ))
+                    {detailedStats?.upcomingDeadlinesList && detailedStats.upcomingDeadlinesList.length > 0 ? (
+                      detailedStats.upcomingDeadlinesList.slice(0, 5).map((doc) => {
+                        const deadline = new Date(doc.deadline);
+                        const today = new Date();
+                        const daysUntilDeadline = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        
+                        return (
+                          <tr 
+                            key={doc.id} 
+                            className="border-t cursor-pointer hover:bg-gray-50"
+                            onClick={() => setLocation(`/documents/${doc.id}`)}
+                          >
+                            <td className="text-xs px-2 py-2 text-primary hover:underline">
+                              {doc.documentNumber} - {doc.subject.substring(0, 30)}...
+                            </td>
+                            <td className="text-xs text-right px-2 py-2 font-medium">
+                              <span className={`${daysUntilDeadline <= 1 ? 'text-red-600' : daysUntilDeadline <= 3 ? 'text-amber-600' : 'text-gray-600'}`}>
+                                {daysUntilDeadline} dias
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr className="border-t">
                         <td className="text-xs px-2 py-2">Nenhum documento pendente</td>
@@ -294,22 +371,28 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {isLoading ? (
+                  {isLoadingDetailed ? (
                     Array(3).fill(0).map((_, i) => (
                       <tr key={i} className="border-t">
                         <td className="px-2 py-2"><Skeleton className="h-4 w-32" /></td>
                         <td className="px-2 py-2 text-right"><Skeleton className="h-4 w-8 ml-auto" /></td>
                       </tr>
                     ))
-                  ) : (stats && stats.totalDocuments > 0) ? (
-                    Array(3).fill(0).map((_, i) => (
+                  ) : (analysisData && analysisData.length > 0) ? (
+                    analysisData.slice(0, 5).map((doc: any) => (
                       <tr 
-                        key={i} 
+                        key={doc.id} 
                         className="border-t cursor-pointer hover:bg-gray-50"
-                        onClick={() => setLocation(`/documents/${i+1}`)}
+                        onClick={() => setLocation(`/documents/${doc.id}`)}
                       >
-                        <td className="text-xs px-2 py-2 text-primary hover:underline">12345.123456/2023-{i+1}</td>
-                        <td className="text-xs text-right px-2 py-2">{i+1}</td>
+                        <td className="text-xs px-2 py-2 text-primary hover:underline">
+                          {doc.documentNumber} - {doc.subject.substring(0, 25)}...
+                        </td>
+                        <td className="text-xs text-right px-2 py-2 font-medium">
+                          <span className={`${doc.daysInAnalysis > 30 ? 'text-red-600' : doc.daysInAnalysis > 15 ? 'text-amber-600' : 'text-gray-600'}`}>
+                            {doc.daysInAnalysis} dias
+                          </span>
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -338,10 +421,27 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-t">
-                    <td className="text-xs px-2 py-2">Nenhuma mensagem</td>
-                    <td className="text-xs text-right px-2 py-2">-</td>
-                  </tr>
+                  {detailedStats?.recentDocumentsList && detailedStats.recentDocumentsList.length > 0 ? (
+                    detailedStats.recentDocumentsList.slice(0, 3).map((doc) => (
+                      <tr 
+                        key={doc.id} 
+                        className="border-t cursor-pointer hover:bg-gray-50"
+                        onClick={() => setLocation(`/documents/${doc.id}`)}
+                      >
+                        <td className="text-xs px-2 py-2 text-primary hover:underline">
+                          {doc.documentNumber} criado
+                        </td>
+                        <td className="text-xs text-right px-2 py-2">
+                          {format(new Date(doc.createdAt), "dd/MM", { locale: ptBR })}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr className="border-t">
+                      <td className="text-xs px-2 py-2">Nenhum documento recente</td>
+                      <td className="text-xs text-right px-2 py-2">-</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
