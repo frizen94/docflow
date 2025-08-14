@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { DocumentService } from "./services/document-service";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import passport from "passport";
@@ -19,8 +20,12 @@ import {
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { hashPassword, verifyPassword, isAdmin, isAuthenticated, hasAdminUser, createAdminUser } from "./auth";
+import { validateDocumentPermission, validateDocumentDeletion } from "./middleware/document-permissions";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize document service
+  const documentService = new DocumentService(storage);
+  
   // Initialize session
   const MemoryStoreSession = MemoryStore(session);
   app.use(
@@ -389,11 +394,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Document Routes
+  // Document Routes - using business service
   app.get("/api/documents", isAuthenticated, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      const documents = await storage.getDocumentsByUserId(userId);
+      const documents = await documentService.listDocumentsForUser(userId);
       res.json(documents);
     } catch (error) {
       res.status(500).json({ error: "Failed to retrieve documents" });
@@ -478,63 +483,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Received document data:", req.body);
       
-      // Ajustar valores null para string vazia em campos opcionais de texto
-      const payload = { ...req.body };
-      ['filePath'].forEach(field => {
-        if (payload[field] === null || payload[field] === undefined) {
-          payload[field] = '';
-        }
-      });
+      const documentData = {
+        ...req.body,
+        folios: parseInt(req.body.folios) || 1,
+        deadlineDays: req.body.deadlineDays ? parseInt(req.body.deadlineDays) : null,
+        filePath: req.body.filePath || null,
+        documentTypeId: Number(req.body.documentTypeId),
+        originAreaId: Number(req.body.originAreaId),
+        currentAreaId: req.body.currentAreaId ? Number(req.body.currentAreaId) : Number(req.body.originAreaId),
+        currentEmployeeId: req.body.currentEmployeeId ? Number(req.body.currentEmployeeId) : null,
+      };
+
+      const document = await documentService.createDocument(documentData, (req.user as any).id);
+      console.log("Document created successfully with business service:", document);
       
-      // Converter IDs para números
-      ['documentTypeId', 'originAreaId', 'currentAreaId', 'createdBy'].forEach(field => {
-        if (payload[field]) {
-          payload[field] = Number(payload[field]);
-        }
-      });
-      
-      // Converter deadline de string para Date se necessário
-      if (payload.deadline && typeof payload.deadline === 'string') {
-        payload.deadline = new Date(payload.deadline);
-      }
-      
-      // Se folios não for enviado, defina com valor 1
-      if (!payload.folios) {
-        payload.folios = 1;
-      }
-      
-      try {
-        const documentData = insertDocumentSchema.parse(payload);
-        console.log("Parsed document data:", documentData);
-        const document = await storage.createDocument(documentData);
-        console.log("Document created successfully:", document);
-        
-        // Criar registro inicial de rastreamento
-        const initialTracking = {
-          documentId: document.id,
-          fromAreaId: document.originAreaId,
-          toAreaId: document.currentAreaId,
-          fromEmployeeId: null,
-          toEmployeeId: null,
-          description: `Documento ${document.documentNumber} criado com prioridade ${document.priority}`,
-          attachmentPath: document.filePath || null,
-          deadlineDays: document.deadlineDays || null,
-          createdBy: document.createdBy
-        };
-        
-        await storage.createDocumentTracking(initialTracking);
-        console.log("Initial tracking record created");
-        
-        res.status(201).json(document);
-      } catch (validationError) {
-        console.error("Validation error:", validationError);
-        handleValidationError(validationError, res);
-      }
+      res.status(201).json(document);
     } catch (error) {
       console.error("Error creating document:", error);
       res.status(500).json({ 
-        error: "Falha ao criar documento", 
-        details: error instanceof Error ? error.message : String(error) 
+        error: error instanceof Error ? error.message : "Falha ao criar documento"
       });
     }
   });
@@ -588,16 +555,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/documents/:id", isAdmin, async (req, res) => {
+  app.delete("/api/documents/:id", isAuthenticated, validateDocumentDeletion, async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const deleted = await storage.deleteDocument(id);
-      if (!deleted) {
-        return res.status(404).json({ error: "Document not found" });
-      }
+      const userId = (req.user as any).id;
+      
+      await documentService.deleteDocument(id, userId);
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: "Failed to delete document" });
+      console.error("Error deleting document:", error);
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Failed to delete document" 
+      });
     }
   });
 
@@ -634,65 +603,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/document-tracking", isAuthenticated, async (req, res) => {
     try {
-      const trackingData = insertDocumentTrackingSchema.parse(req.body);
+      const { documentId, toAreaId, toEmployeeId, description, deadlineDays } = req.body;
       const userId = (req.user as any).id;
       
-      // Validar se usuário pode movimentar o documento
-      const canManage = await storage.canUserManageDocument(userId, trackingData.documentId);
-      if (!canManage) {
-        return res.status(403).json({ 
-          error: "Você não tem permissão para movimentar este documento. Apenas o responsável atribuído pode movimentá-lo." 
-        });
-      }
-      
-      const tracking = await storage.createDocumentTracking(trackingData);
-      
-      // Update the current area and employee of the document
-      const document = await storage.getDocument(tracking.documentId);
-      if (document) {
-        await storage.updateDocument(tracking.documentId, { 
-          currentAreaId: tracking.toAreaId,
-          currentEmployeeId: tracking.toEmployeeId
-        });
-      }
+      const tracking = await documentService.moveDocument(
+        Number(documentId),
+        Number(toAreaId),
+        toEmployeeId ? Number(toEmployeeId) : null,
+        description || "",
+        deadlineDays ? Number(deadlineDays) : null,
+        userId
+      );
       
       res.status(201).json(tracking);
     } catch (error) {
-      handleValidationError(error, res);
+      console.error("Error moving document:", error);
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Failed to move document" 
+      });
     }
   });
   
-  // Rotas de encaminhamento de documentos
-  app.post("/api/documents/:id/forward-to-area", isAuthenticated, async (req, res) => {
+  // Rotas de encaminhamento usando serviço de negócio
+  app.post("/api/documents/:id/forward-to-area", isAuthenticated, validateDocumentPermission, async (req, res) => {
     try {
       const documentId = Number(req.params.id);
       const { toAreaId, description, deadlineDays } = req.body;
+      const userId = (req.user as any).id;
       
       if (!toAreaId) {
         return res.status(400).json({ error: "Área de destino é obrigatória" });
       }
       
-      const tracking = await storage.forwardDocumentToArea(
+      const tracking = await documentService.moveDocument(
         documentId,
         Number(toAreaId),
+        null, // sem funcionário específico
         description || "",
-        deadlineDays ? Number(deadlineDays) : undefined
+        deadlineDays ? Number(deadlineDays) : null,
+        userId
       );
       
       res.status(201).json(tracking);
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: "Erro ao encaminhar documento para área" });
-      }
+      console.error("Error forwarding to area:", error);
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Erro ao encaminhar documento para área" 
+      });
     }
   });
   
-  app.post("/api/documents/:id/forward-to-employee", isAuthenticated, async (req, res) => {
+  app.post("/api/documents/:id/forward-to-employee", isAuthenticated, validateDocumentPermission, async (req, res) => {
     try {
       const documentId = Number(req.params.id);
       const { toAreaId, toEmployeeId, description, deadlineDays } = req.body;
+      const userId = (req.user as any).id;
       
       if (!toAreaId) {
         return res.status(400).json({ error: "Área de destino é obrigatória" });
@@ -702,21 +667,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Funcionário de destino é obrigatório" });
       }
       
-      const tracking = await storage.forwardDocumentToEmployee(
+      const tracking = await documentService.moveDocument(
         documentId,
         Number(toAreaId),
         Number(toEmployeeId),
         description || "",
-        deadlineDays ? Number(deadlineDays) : undefined
+        deadlineDays ? Number(deadlineDays) : null,
+        userId
       );
       
       res.status(201).json(tracking);
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ error: error.message });
-      } else {
-        res.status(500).json({ error: "Erro ao encaminhar documento para funcionário" });
+      console.error("Error forwarding to employee:", error);
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Erro ao encaminhar documento para funcionário" 
+      });
+    }
+  });
+
+  // Rota para atribuir documento a funcionário específico
+  app.post("/api/documents/:id/assign", isAuthenticated, validateDocumentPermission, async (req, res) => {
+    try {
+      const documentId = Number(req.params.id);
+      const { employeeId } = req.body;
+      const userId = (req.user as any).id;
+      
+      if (!employeeId) {
+        return res.status(400).json({ error: "ID do funcionário é obrigatório" });
       }
+      
+      await documentService.assignDocument(documentId, Number(employeeId), userId);
+      res.json({ success: true, message: "Documento atribuído com sucesso" });
+    } catch (error) {
+      console.error("Error assigning document:", error);
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Erro ao atribuir documento" 
+      });
+    }
+  });
+
+  // Rota para atualizar status do documento
+  app.post("/api/documents/:id/status", isAuthenticated, validateDocumentPermission, async (req, res) => {
+    try {
+      const documentId = Number(req.params.id);
+      const { status } = req.body;
+      const userId = (req.user as any).id;
+      
+      if (!status) {
+        return res.status(400).json({ error: "Status é obrigatório" });
+      }
+      
+      await documentService.updateDocumentStatus(documentId, status, userId);
+      res.json({ success: true, message: "Status atualizado com sucesso" });
+    } catch (error) {
+      console.error("Error updating document status:", error);
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Erro ao atualizar status" 
+      });
     }
   });
 
