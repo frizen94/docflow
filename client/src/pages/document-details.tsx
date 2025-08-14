@@ -13,7 +13,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, FileText, User, Building, CornerDownRight, Clipboard, SendIcon, HistoryIcon, Download, Paperclip, FolderOpen } from "lucide-react";
+import { ArrowLeft, FileText, User, Building, CornerDownRight, Clipboard, SendIcon, HistoryIcon, Download, Paperclip, FolderOpen, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ import DocumentForm from "@/components/documents/document-form";
 import TrackingModal from "@/components/documents/tracking-modal";
 import DocumentForwardModal from "@/components/documents/document-forward-modal";
 import DocumentTrackingHistory from "@/components/documents/document-tracking-history";
+import DocumentAttachments from "@/components/documents/document-attachments";
 
 // Schema for tracking form
 const trackingFormSchema = z.object({
@@ -329,122 +330,64 @@ export default function DocumentDetails({ id }: DocumentDetailsProps) {
 
           </div>
 
+          {/* Attachments Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Paperclip className="h-5 w-5 mr-2" />
+                Anexos do Processo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DocumentAttachments documentId={document.id} />
+            </CardContent>
+          </Card>
+
           {/* Actions */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <Card className="flex-1">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CornerDownRight className="h-5 w-5 mr-2" />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Clipboard className="h-5 w-5 mr-2" />
+                Ações do Documento
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button
+                  variant="outline"
+                  className="flex items-center justify-center"
+                  onClick={() => setShowForwardModal(true)}
+                >
+                  <SendIcon className="h-4 w-4 mr-2" />
                   Encaminhar Documento
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="toAreaId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Área de Destino</FormLabel>
-                          <Select
-                            onValueChange={(value) => field.onChange(Number(value))}
-                            value={field.value ? field.value.toString() : undefined}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione a área de destino" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {areas?.map((area) => (
-                                <SelectItem key={area.id} value={area.id.toString()}>
-                                  {area.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                </Button>
 
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Descrição (Opcional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              {...field}
-                              placeholder="Adicione uma descrição sobre esta transferência..."
-                              rows={3}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <Button
-                      type="submit"
-                      disabled={trackingMutation.isPending || document.status === "Completed"}
-                    >
-                      {trackingMutation.isPending ? "Transferindo..." : "Encaminhar Documento"}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-
-            <Card className="flex-1">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clipboard className="h-5 w-5 mr-2" />
-                  Ações do Documento
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center"
-                    onClick={() => setShowForwardModal(true)}
-                  >
-                    <SendIcon className="h-4 w-4 mr-2" />
-                    Encaminhar Documento
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center"
-                    onClick={() => document && document.id && setShowTrackingModal(true)}
-                  >
-                    <HistoryIcon className="h-4 w-4 mr-2" />
-                    Histórico de Tramitação
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setShowEditForm(true)}
-                  >
-                    Editar Documento
-                  </Button>
-                  
-                  <Button
-                    variant="default"
-                    className="w-full"
-                    disabled={document.status === "Completed" || completeMutation.isPending}
-                    onClick={handleCompleteDocument}
-                  >
-                    {completeMutation.isPending ? "Processando..." : "Finalizar Documento"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                <Button
+                  variant="outline"
+                  className="flex items-center justify-center"
+                  onClick={() => document && document.id && setShowTrackingModal(true)}
+                >
+                  <HistoryIcon className="h-4 w-4 mr-2" />
+                  Histórico de Tramitação
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => setShowEditForm(true)}
+                >
+                  Editar Documento
+                </Button>
+                
+                <Button
+                  variant="default"
+                  disabled={document.status === "Completed" || completeMutation.isPending}
+                  onClick={handleCompleteDocument}
+                >
+                  {completeMutation.isPending ? "Processando..." : "Finalizar Documento"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Forward Modal */}
           {showForwardModal && document && (

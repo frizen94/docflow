@@ -830,6 +830,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Download attachment file
+  app.get("/api/attachments/:id/download", isAuthenticated, async (req, res) => {
+    try {
+      const attachment = await storage.getDocumentAttachment(Number(req.params.id));
+      if (!attachment) {
+        return res.status(404).json({ error: "Attachment not found" });
+      }
+
+      // Check if file exists
+      if (!fs.existsSync(attachment.filePath)) {
+        return res.status(404).json({ error: "File not found on disk" });
+      }
+
+      // Set headers for download
+      res.setHeader('Content-Disposition', `attachment; filename="${attachment.originalName}"`);
+      res.setHeader('Content-Type', attachment.mimeType);
+      
+      // Send file
+      res.sendFile(path.resolve(attachment.filePath));
+    } catch (error) {
+      console.error("Error downloading attachment:", error);
+      res.status(500).json({ error: "Failed to retrieve attachment" });
+    }
+  });
+
   app.delete("/api/attachments/:id", isAuthenticated, async (req, res) => {
     try {
       const attachmentId = Number(req.params.id);

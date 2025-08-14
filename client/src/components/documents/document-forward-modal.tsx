@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,6 +26,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -71,6 +72,9 @@ export default function DocumentForwardModal({
 }: DocumentForwardModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [attachmentDescription, setAttachmentDescription] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: areas = [] } = useQuery<Area[]>({
     queryKey: ["/api/areas"],
@@ -106,6 +110,8 @@ export default function DocumentForwardModal({
         action: "ATRIBUIR",
         toAreaId: ""
       });
+      setSelectedFile(null);
+      setAttachmentDescription("");
     }
   }, [isOpen, form]);
 
@@ -188,18 +194,64 @@ export default function DocumentForwardModal({
     },
   });
 
-  const onSubmit = (values: ForwardFormValues) => {
-    if (values.action === "ATRIBUIR") {
-      assignEmployeeMutation.mutate(values);
-    } else if (values.action === "ENCAMINHAR") {
-      forwardToAreaMutation.mutate(values);
-    } else if (values.action === "FINALIZAR") {
-      // Lógica para finalizar o documento
-      toast({
-        title: "Finalizar",
-        description: "Funcionalidade de finalizar documento será implementada em breve",
-      });
-      return;
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setSelectedFile(files[0]);
+    }
+  };
+
+  const uploadAttachmentIfSelected = async () => {
+    if (selectedFile) {
+      try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("category", "Anexo");
+        formData.append("description", attachmentDescription || "Anexo do encaminhamento");
+        formData.append("version", "1.0");
+
+        const response = await fetch(`/api/documents/${documentId}/attachments`, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Erro ao enviar anexo");
+        }
+
+        toast({
+          title: "Anexo adicionado",
+          description: "O anexo foi enviado junto com o encaminhamento.",
+        });
+      } catch (error) {
+        toast({
+          title: "Aviso",
+          description: "Documento encaminhado, mas houve erro ao anexar o arquivo.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const onSubmit = async (values: ForwardFormValues) => {
+    try {
+      if (values.action === "ATRIBUIR") {
+        await assignEmployeeMutation.mutateAsync(values);
+      } else if (values.action === "ENCAMINHAR") {
+        await forwardToAreaMutation.mutateAsync(values);
+      } else if (values.action === "FINALIZAR") {
+        toast({
+          title: "Finalizar",
+          description: "Funcionalidade de finalizar documento será implementada em breve",
+        });
+        return;
+      }
+
+      // Upload attachment after successful forward/assign
+      await uploadAttachmentIfSelected();
+    } catch (error) {
+      // Error handling is already done in mutations
     }
   };
 
@@ -340,6 +392,35 @@ export default function DocumentForwardModal({
                 </FormItem>
               )}
             />
+
+            {/* Seção de Anexo */}
+            <div className="space-y-2">
+              <Label htmlFor="attachment">Anexar Arquivo (Opcional)</Label>
+              <Input
+                id="attachment"
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls"
+              />
+              {selectedFile && (
+                <p className="text-sm text-green-600">
+                  Arquivo selecionado: {selectedFile.name}
+                </p>
+              )}
+              
+              {selectedFile && (
+                <div>
+                  <Label htmlFor="attachment-description">Descrição do Anexo</Label>
+                  <Input
+                    id="attachment-description"
+                    value={attachmentDescription}
+                    onChange={(e) => setAttachmentDescription(e.target.value)}
+                    placeholder="Descreva o anexo..."
+                  />
+                </div>
+              )}
+            </div>
 
             <DialogFooter>
               <Button
