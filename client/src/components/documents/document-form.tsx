@@ -42,7 +42,7 @@ const documentFormSchema = insertDocumentSchema
     deadlineDays: z.number().int().min(1, {
       message: "O prazo deve ser de pelo menos 1 dia",
     }).optional(),
-    priority: z.string().default("Normal"),
+    priority: z.enum(["Normal", "Com Contagem de Prazo", "Urgente"]).default("Normal"),
   })
   .omit({ trackingNumber: true, deadline: true });
 
@@ -203,8 +203,17 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
 
   // Handle form submission
   const onSubmit = (values: DocumentFormValues) => {
+    // Calculate deadline if priority is "Com Contagem de Prazo"
+    const processedValues = {
+      ...values,
+      ...(values.priority === "Com Contagem de Prazo" && values.deadlineDays && values.deadlineDays > 0 
+        ? { deadline: addDays(new Date(), values.deadlineDays).toISOString() }
+        : {}
+      )
+    };
+
     // First create the document without file
-    mutation.mutate(values, {
+    mutation.mutate(processedValues, {
       onSuccess: (newDocument) => {
         // If file is selected and document was created successfully, upload it as attachment
         if (selectedFile && newDocument?.id) {
@@ -212,6 +221,7 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
           formData.append("file", selectedFile);
           formData.append("category", "Principal");
           formData.append("description", "Documento principal do processo");
+          formData.append("version", "1.0");
           
           fetch(`/api/documents/${newDocument.id}/attachments`, {
             method: "POST",

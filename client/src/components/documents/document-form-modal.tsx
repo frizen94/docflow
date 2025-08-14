@@ -181,9 +181,9 @@ export default function DocumentFormModal({
         ? generateProcessNumber()
         : document?.documentNumber || "";
             
-      // Calcular deadline somente se a prioridade for "Com Contagem de Prazo"
+      // Calcular deadline somente se a prioridade for "Com Contagem de Prazo" e há deadlineDays
       let deadline = null;
-      if (values.priority === "Com Contagem de Prazo" && values.deadlineDays !== undefined && values.deadlineDays !== null) {
+      if (values.priority === "Com Contagem de Prazo" && values.deadlineDays && values.deadlineDays > 0) {
         const deadlineDate = addDays(new Date(), values.deadlineDays);
         deadline = deadlineDate.toISOString();
       }
@@ -198,12 +198,8 @@ export default function DocumentFormModal({
         currentAreaId: Number(values.currentAreaId),
         ...(trackingNumber ? { trackingNumber } : {}),
         folios: 1, // Valor padrão para folios
+        ...(values.deadlineDays ? { deadlineDays: values.deadlineDays } : {}), // Inclui deadlineDays se existir
       };
-      
-      // Remove deadlineDays from the payload as it's not in the schema
-      if ('deadlineDays' in payload) {
-        delete (payload as any).deadlineDays;
-      }
       
       console.log("Final payload for document creation:", payload);
 
@@ -262,42 +258,28 @@ export default function DocumentFormModal({
       const createdDocument = await createMutation;
       console.log("Document created:", createdDocument);
       
-      // If file is selected, upload it to the correct folder
+      // If file is selected and document was created successfully, upload it as attachment
       if (selectedFile && createdDocument) {
-        console.log("Uploading file to document folder:", selectedFile.name);
+        console.log("Uploading file as attachment:", selectedFile.name);
         
         const formData = new FormData();
         formData.append("file", selectedFile);
-        formData.append("documentId", createdDocument.id.toString());
+        formData.append("category", "Principal");
+        formData.append("description", "Documento principal do processo");
+        formData.append("version", "1.0");
         
-        const uploadResponse = await fetch("/api/upload", {
+        const uploadResponse = await fetch(`/api/documents/${createdDocument.id}/attachments`, {
           method: "POST",
           body: formData,
           credentials: "include",
         });
         
         if (!uploadResponse.ok) {
-          throw new Error("Erro ao enviar arquivo");
+          throw new Error("Erro ao enviar arquivo como anexo");
         }
         
         const uploadData = await uploadResponse.json();
-        console.log("File uploaded successfully:", uploadData);
-        
-        // Update document with file path
-        const updateResponse = await fetch(`/api/documents/${createdDocument.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            filePath: uploadData.filePath
-          }),
-        });
-        
-        if (!updateResponse.ok) {
-          console.warn("Failed to update document with file path");
-        }
+        console.log("File uploaded successfully as attachment:", uploadData);
       }
       
       console.log("=== FORM SUBMISSION COMPLETED ===");
