@@ -42,8 +42,6 @@ const documentFormSchema = insertDocumentSchema
     deadlineDays: z.number().int().min(1, {
       message: "O prazo deve ser de pelo menos 1 dia",
     }).optional(),
-    // Garantir que campos opcionais sejam strings vazias em vez de null/undefined
-    filePath: z.string().optional().transform(val => val || ''),
   })
   .omit({ trackingNumber: true, deadline: true });
 
@@ -159,13 +157,9 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
         documentTypeId: Number(values.documentTypeId),
         originAreaId: Number(values.originAreaId),
         currentAreaId: Number(values.currentAreaId),
+        deadlineDays: values.deadlineDays, // Manter o deadlineDays para o servidor
         ...(trackingNumber ? { trackingNumber } : {}),
       };
-      
-      // Remove deadlineDays from the payload as it's not in the schema
-      if ('deadlineDays' in payload) {
-        delete (payload as any).deadlineDays;
-      }
 
       if (editMode && documentId) {
         const res = await apiRequest("PUT", `/api/documents/${documentId}`, payload);
@@ -206,40 +200,47 @@ export default function DocumentForm({ editMode = false, documentId }: DocumentF
 
   // Handle form submission
   const onSubmit = (values: DocumentFormValues) => {
-    // Create FormData for file upload
-    const formData = new FormData();
-    
-    // Append file if selected
-    if (selectedFile) {
-      formData.append("file", selectedFile);
-      
-      // Upload file first
-      fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      })
-        .then(response => response.json())
-        .then(data => {
-          // If file upload successful, add the file path to the document data
-          const valuesWithFile = {
-            ...values,
-            filePath: data.filePath
-          };
-          mutation.mutate(valuesWithFile);
-        })
-        .catch(error => {
-          console.error("Error uploading file:", error);
-          toast({
-            title: "Erro ao enviar arquivo",
-            description: "Ocorreu um erro ao enviar o arquivo. Por favor, tente novamente.",
-            variant: "destructive",
-          });
-        });
-    } else {
-      // If no file, just submit the form data
-      mutation.mutate(values);
-    }
+    // First create the document without file
+    mutation.mutate(values, {
+      onSuccess: (newDocument) => {
+        // If file is selected and document was created successfully, upload it as attachment
+        if (selectedFile && newDocument?.id) {
+          const formData = new FormData();
+          formData.append("file", selectedFile);
+          formData.append("category", "Principal");
+          formData.append("description", "Documento principal do processo");
+          
+          fetch(`/api/documents/${newDocument.id}/attachments`, {
+            method: "POST",
+            body: formData,
+            credentials: "include",
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                toast({
+                  title: "Documento criado com sucesso",
+                  description: "O documento e o arquivo foram cadastrados com sucesso.",
+                });
+              } else {
+                toast({
+                  title: "Aviso",
+                  description: "Documento criado, mas houve erro ao anexar o arquivo.",
+                  variant: "destructive",
+                });
+              }
+            })
+            .catch(error => {
+              console.error("Error uploading attachment:", error);
+              toast({
+                title: "Aviso",
+                description: "Documento criado, mas houve erro ao anexar o arquivo.",
+                variant: "destructive",
+              });
+            });
+        }
+      }
+    });
   };
 
   // Removed representation type watch

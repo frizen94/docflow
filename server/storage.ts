@@ -4,7 +4,8 @@ import {
   DocumentType, InsertDocumentType, documentTypes,
   Employee, InsertEmployee, employees,
   Document, InsertDocument, documents,
-  DocumentTracking, InsertDocumentTracking, documentTracking
+  DocumentTracking, InsertDocumentTracking, documentTracking,
+  DocumentAttachment, InsertDocumentAttachment, documentAttachments
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, isNotNull, lt, gt, ne, desc } from "drizzle-orm";
@@ -36,6 +37,7 @@ export interface IStorage {
   // Employee operations
   getEmployee(id: number): Promise<Employee | undefined>;
   getEmployeeByDni(dni: string): Promise<Employee | undefined>;
+  getEmployeesByArea(areaId: number): Promise<Employee[]>;
   createEmployee(employee: InsertEmployee): Promise<Employee>;
   listEmployees(): Promise<Employee[]>;
   updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined>;
@@ -61,6 +63,14 @@ export interface IStorage {
   getRecentActivities(limit: number): Promise<DocumentTracking[]>;
   forwardDocumentToArea(documentId: number, toAreaId: number, description: string, deadlineDays?: number): Promise<DocumentTracking>;
   forwardDocumentToEmployee(documentId: number, toAreaId: number, toEmployeeId: number, description: string, deadlineDays?: number): Promise<DocumentTracking>;
+
+  // Document Attachment operations
+  getDocumentAttachment(id: number): Promise<DocumentAttachment | undefined>;
+  createDocumentAttachment(attachment: InsertDocumentAttachment): Promise<DocumentAttachment>;
+  listDocumentAttachments(documentId: number): Promise<DocumentAttachment[]>;
+  updateDocumentAttachment(id: number, attachment: Partial<InsertDocumentAttachment>): Promise<DocumentAttachment | undefined>;
+  deleteDocumentAttachment(id: number): Promise<boolean>;
+  getAttachmentsByCategory(documentId: number, category: string): Promise<DocumentAttachment[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -70,6 +80,7 @@ export class MemStorage implements IStorage {
   private employees: Map<number, Employee>;
   private documents: Map<number, Document>;
   private documentTrackings: Map<number, DocumentTracking>;
+  private documentAttachments: Map<number, DocumentAttachment>;
   
   private userIdCounter: number;
   private areaIdCounter: number;
@@ -77,6 +88,7 @@ export class MemStorage implements IStorage {
   private employeeIdCounter: number;
   private documentIdCounter: number;
   private documentTrackingIdCounter: number;
+  private documentAttachmentIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -85,6 +97,7 @@ export class MemStorage implements IStorage {
     this.employees = new Map();
     this.documents = new Map();
     this.documentTrackings = new Map();
+    this.documentAttachments = new Map();
     
     this.userIdCounter = 1;
     this.areaIdCounter = 1;
@@ -92,6 +105,7 @@ export class MemStorage implements IStorage {
     this.employeeIdCounter = 1;
     this.documentIdCounter = 1;
     this.documentTrackingIdCounter = 1;
+    this.documentAttachmentIdCounter = 1;
     
     // Initialize with default admin user
     this.createUser({ 
@@ -234,6 +248,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.employees.values()).find(emp => emp.dni === dni);
   }
 
+  async getEmployeesByArea(areaId: number): Promise<Employee[]> {
+    return Array.from(this.employees.values()).filter(emp => emp.areaId === areaId && emp.status);
+  }
+
   async createEmployee(employee: InsertEmployee): Promise<Employee> {
     const id = this.employeeIdCounter++;
     const newEmployee: Employee = { 
@@ -279,7 +297,6 @@ export class MemStorage implements IStorage {
     const newDocument: Document = { 
       ...document, 
       id,
-      filePath: document.filePath || null,
       deadline: document.deadline || null,
       deadlineDays: document.deadlineDays || null,
       currentEmployeeId: document.currentEmployeeId || null,
@@ -502,6 +519,48 @@ export class MemStorage implements IStorage {
     
     return newTracking;
   }
+
+  // Document Attachment operations
+  async getDocumentAttachment(id: number): Promise<DocumentAttachment | undefined> {
+    return this.documentAttachments.get(id);
+  }
+
+  async createDocumentAttachment(attachment: InsertDocumentAttachment): Promise<DocumentAttachment> {
+    const id = this.documentAttachmentIdCounter++;
+    const newAttachment: DocumentAttachment = {
+      ...attachment,
+      id,
+      description: attachment.description || null,
+      category: attachment.category || 'Anexo',
+      version: attachment.version || '1.0',
+      uploadedAt: new Date()
+    };
+    this.documentAttachments.set(id, newAttachment);
+    return newAttachment;
+  }
+
+  async listDocumentAttachments(documentId: number): Promise<DocumentAttachment[]> {
+    return Array.from(this.documentAttachments.values())
+      .filter(attachment => attachment.documentId === documentId);
+  }
+
+  async updateDocumentAttachment(id: number, attachment: Partial<InsertDocumentAttachment>): Promise<DocumentAttachment | undefined> {
+    const existing = this.documentAttachments.get(id);
+    if (!existing) return undefined;
+
+    const updated: DocumentAttachment = { ...existing, ...attachment };
+    this.documentAttachments.set(id, updated);
+    return updated;
+  }
+
+  async deleteDocumentAttachment(id: number): Promise<boolean> {
+    return this.documentAttachments.delete(id);
+  }
+
+  async getAttachmentsByCategory(documentId: number, category: string): Promise<DocumentAttachment[]> {
+    return Array.from(this.documentAttachments.values())
+      .filter(attachment => attachment.documentId === documentId && attachment.category === category);
+  }
 }
 
 // Database storage implementation
@@ -607,6 +666,10 @@ export class DatabaseStorage implements IStorage {
   async getEmployeeByDni(dni: string): Promise<Employee | undefined> {
     const [employee] = await db.select().from(employees).where(eq(employees.dni, dni));
     return employee || undefined;
+  }
+
+  async getEmployeesByArea(areaId: number): Promise<Employee[]> {
+    return await db.select().from(employees).where(and(eq(employees.areaId, areaId), eq(employees.status, true)));
   }
 
   async createEmployee(employee: InsertEmployee): Promise<Employee> {
@@ -813,6 +876,49 @@ export class DatabaseStorage implements IStorage {
     };
     
     return await this.createDocumentTracking(tracking);
+  }
+
+  // Document Attachment operations
+  async getDocumentAttachment(id: number): Promise<DocumentAttachment | undefined> {
+    const [attachment] = await db.select().from(documentAttachments).where(eq(documentAttachments.id, id));
+    return attachment || undefined;
+  }
+
+  async createDocumentAttachment(attachment: InsertDocumentAttachment): Promise<DocumentAttachment> {
+    const [newAttachment] = await db.insert(documentAttachments).values({
+      ...attachment,
+      description: attachment.description || null,
+      category: attachment.category || 'Anexo',
+      version: attachment.version || '1.0'
+    }).returning();
+    return newAttachment;
+  }
+
+  async listDocumentAttachments(documentId: number): Promise<DocumentAttachment[]> {
+    return await db.select().from(documentAttachments)
+      .where(eq(documentAttachments.documentId, documentId));
+  }
+
+  async updateDocumentAttachment(id: number, attachment: Partial<InsertDocumentAttachment>): Promise<DocumentAttachment | undefined> {
+    const [updated] = await db.update(documentAttachments)
+      .set(attachment)
+      .where(eq(documentAttachments.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteDocumentAttachment(id: number): Promise<boolean> {
+    const result = await db.delete(documentAttachments)
+      .where(eq(documentAttachments.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getAttachmentsByCategory(documentId: number, category: string): Promise<DocumentAttachment[]> {
+    return await db.select().from(documentAttachments)
+      .where(and(
+        eq(documentAttachments.documentId, documentId),
+        eq(documentAttachments.category, category)
+      ));
   }
 }
 

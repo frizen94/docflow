@@ -250,14 +250,25 @@ export default function DocumentFormModal({
       console.log("=== FORM SUBMISSION STARTED ===");
       console.log("Form values before submission:", values);
       
-      let filePath = "";
+      // First, create document WITHOUT file to get documentNumber
+      const finalValues = {
+        ...values,
+        filePath: "" // Will be updated later if file exists
+      };
+
+      const createMutation = mutation.mutateAsync(finalValues);
+      console.log("Creating document...");
       
-      // Upload file first if selected
-      if (selectedFile) {
-        console.log("Uploading file:", selectedFile.name);
+      const createdDocument = await createMutation;
+      console.log("Document created:", createdDocument);
+      
+      // If file is selected, upload it to the correct folder
+      if (selectedFile && createdDocument) {
+        console.log("Uploading file to document folder:", selectedFile.name);
         
         const formData = new FormData();
         formData.append("file", selectedFile);
+        formData.append("documentId", createdDocument.id.toString());
         
         const uploadResponse = await fetch("/api/upload", {
           method: "POST",
@@ -270,19 +281,26 @@ export default function DocumentFormModal({
         }
         
         const uploadData = await uploadResponse.json();
-        filePath = uploadData.filePath;
         console.log("File uploaded successfully:", uploadData);
+        
+        // Update document with file path
+        const updateResponse = await fetch(`/api/documents/${createdDocument.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            filePath: uploadData.filePath
+          }),
+        });
+        
+        if (!updateResponse.ok) {
+          console.warn("Failed to update document with file path");
+        }
       }
       
-      // Submit document with file path
-      const finalValues = {
-        ...values,
-        filePath
-      };
-      
-      console.log("Submitting document with data:", finalValues);
-      console.log("=== CALLING MUTATION ===");
-      mutation.mutate(finalValues);
+      console.log("=== FORM SUBMISSION COMPLETED ===");
       
     } catch (error) {
       console.error("Error in form submission:", error);

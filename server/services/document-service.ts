@@ -46,9 +46,12 @@ export class DocumentService {
   calculateDeadline(priority: string, customDays?: number): { deadlineDays: number | null, deadline: Date | null } {
     let deadlineDays: number | null = null;
     
+    console.log("calculateDeadline called with:", { priority, customDays });
+    
     // Usar dias customizados se fornecidos
     if (customDays && customDays > 0) {
       deadlineDays = customDays;
+      console.log("Using custom days:", deadlineDays);
     } else {
       // Regras padrão por prioridade
       switch (priority) {
@@ -63,11 +66,13 @@ export class DocumentService {
           deadlineDays = null;
           break;
       }
+      console.log("Using priority-based days:", deadlineDays);
     }
 
     const deadline = deadlineDays ? 
       this.storage.calculateDeadlineDate(new Date(), deadlineDays) : null;
 
+    console.log("Final deadline calculation:", { deadlineDays, deadline });
     return { deadlineDays, deadline };
   }
 
@@ -111,10 +116,9 @@ export class DocumentService {
       originAreaId: documentData.originAreaId,
       currentAreaId: documentData.currentAreaId || documentData.originAreaId,
       currentEmployeeId: documentData.currentEmployeeId || null,
-      status: documentData.status || "Pending",
+      status: documentData.status || "Em Análise",
       subject: documentData.subject.trim(),
       folios: documentData.folios || 1,
-      filePath: documentData.filePath || null,
       priority: documentData.priority || "Normal",
       deadlineDays,
       deadline,
@@ -140,7 +144,7 @@ export class DocumentService {
       fromEmployeeId: null,
       toEmployeeId: document.currentEmployeeId || null,
       description: `Documento ${document.documentNumber} criado com prioridade ${document.priority}`,
-      attachmentPath: document.filePath || null,
+      attachmentPath: null,
       deadlineDays: document.deadlineDays || null,
       createdBy,
     };
@@ -234,10 +238,18 @@ export class DocumentService {
 
     const trackingRecord = await this.storage.createDocumentTracking(tracking);
 
+    // Calcular nova data limite se deadlineDays foi fornecido
+    let deadline = null;
+    if (deadlineDays && deadlineDays > 0) {
+      deadline = this.storage.calculateDeadlineDate(new Date(), deadlineDays);
+    }
+
     // Atualizar documento
     await this.storage.updateDocument(documentId, {
       currentAreaId: toAreaId,
       currentEmployeeId: toEmployeeId,
+      deadlineDays: deadlineDays || null,
+      deadline: deadline
     });
 
     return trackingRecord;
@@ -330,7 +342,7 @@ export class DocumentService {
       throw new Error(reason || "Sem permissão para atualizar documento");
     }
 
-    const validStatuses = ["Pending", "In Progress", "Completed", "Archived"];
+    const validStatuses = ["Pending", "Em Análise", "In Progress", "Completed", "Archived"];
     if (!validStatuses.includes(status)) {
       throw new Error("Status inválido");
     }

@@ -72,7 +72,6 @@ export const documents = pgTable("documents", {
   status: text("status").notNull(), // 'Pending', 'In Progress', 'Completed', etc.
   subject: text("subject").notNull(),
   folios: integer("folios").notNull(),
-  filePath: text("file_path"),
   priority: text("priority").default("Normal").notNull(), // 'Normal', 'Com Contagem de Prazo', 'Urgente'
   deadlineDays: integer("deadline_days"),  // Prazo em dias
   deadline: timestamp("deadline"),         // Data final calculada (opcional)
@@ -102,3 +101,23 @@ export const documentTracking = pgTable("document_tracking", {
 export const insertDocumentTrackingSchema = createInsertSchema(documentTracking).omit({ id: true, createdAt: true });
 export type InsertDocumentTracking = z.infer<typeof insertDocumentTrackingSchema>;
 export type DocumentTracking = typeof documentTracking.$inferSelect;
+
+// Document Attachments table
+export const documentAttachments = pgTable("document_attachments", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id").notNull(),
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  mimeType: text("mime_type").notNull(),
+  category: text("category").notNull().default("Anexo"), // 'Principal', 'Anexo', 'Resposta', 'Complementação', 'Parecer', 'Despacho', 'Comprovante'
+  description: text("description"),
+  version: text("version").notNull().default("1.0"),
+  uploadedBy: integer("uploaded_by").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+});
+
+export const insertDocumentAttachmentSchema = createInsertSchema(documentAttachments).omit({ id: true, uploadedAt: true });
+export type InsertDocumentAttachment = z.infer<typeof insertDocumentAttachmentSchema>;
+export type DocumentAttachment = typeof documentAttachments.$inferSelect;

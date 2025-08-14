@@ -37,11 +37,21 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 const forwardFormSchema = z.object({
-  toAreaId: z.string().min(1, { message: "Área de destino é obrigatória" }),
+  toEmployeeId: z.string().optional(),
   description: z.string().min(1, { message: "Descrição é obrigatória" }),
   deadlineDays: z.string().optional(),
-  toEmployeeId: z.string().optional(),
-  action: z.enum(["ENCAMINHAR", "FINALIZAR"]),
+  action: z.enum(["ATRIBUIR", "ENCAMINHAR", "FINALIZAR"]),
+  toAreaId: z.string().optional(), // Para ação ENCAMINHAR
+}).refine((data) => {
+  if (data.action === "ATRIBUIR" && !data.toEmployeeId) {
+    return false;
+  }
+  if (data.action === "ENCAMINHAR" && !data.toAreaId) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Campo obrigatório para a ação selecionada",
 });
 
 type ForwardFormValues = z.infer<typeof forwardFormSchema>;
@@ -50,7 +60,7 @@ interface DocumentForwardModalProps {
   isOpen: boolean;
   onClose: () => void;
   documentId: number;
-  currentAreaId?: number;
+  currentAreaId: number; // Agora é obrigatório para buscar funcionários da área
 }
 
 export default function DocumentForwardModal({
@@ -59,7 +69,6 @@ export default function DocumentForwardModal({
   documentId,
   currentAreaId
 }: DocumentForwardModalProps) {
-  const [forwardToEmployee, setForwardToEmployee] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -68,44 +77,37 @@ export default function DocumentForwardModal({
     enabled: isOpen
   });
 
+  // Buscar funcionários da área atual do documento
   const { data: employees = [], isLoading: employeesLoading } = useQuery<Employee[]>({
-    queryKey: ["/api/employees"],
-    enabled: isOpen && forwardToEmployee
+    queryKey: [`/api/employees/area/${currentAreaId}`],
+    enabled: isOpen && !!currentAreaId
   });
 
   const form = useForm<ForwardFormValues>({
     resolver: zodResolver(forwardFormSchema),
     defaultValues: {
-      toAreaId: "",
+      toEmployeeId: "",
       description: "",
       deadlineDays: "",
-      toEmployeeId: "",
-      action: "ENCAMINHAR"
+      action: "ATRIBUIR",
+      toAreaId: ""
     }
   });
 
-  const { action, toAreaId } = form.watch();
+  const { action } = form.watch();
 
   // Resetar formulário quando o modal abrir
   useEffect(() => {
     if (isOpen) {
       form.reset({
-        toAreaId: "",
+        toEmployeeId: "",
         description: "",
         deadlineDays: "",
-        toEmployeeId: "",
-        action: "ENCAMINHAR"
+        action: "ATRIBUIR",
+        toAreaId: ""
       });
-      setForwardToEmployee(false);
     }
   }, [isOpen, form]);
-
-  // Mostrar/esconder campos de area baseado na ação selecionada
-  useEffect(() => {
-    if (action === "FINALIZAR") {
-      setForwardToEmployee(false);
-    }
-  }, [action]);
 
   const forwardToAreaMutation = useMutation({
     mutationFn: async (values: ForwardFormValues) => {
@@ -128,6 +130,32 @@ export default function DocumentForwardModal({
       toast({
         title: "Erro",
         description: error instanceof Error ? error.message : "Erro ao encaminhar documento",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const assignEmployeeMutation = useMutation({
+    mutationFn: async (values: ForwardFormValues) => {
+      return apiRequest("POST", `/api/documents/${documentId}/assign-employee`, {
+        toEmployeeId: values.toEmployeeId,
+        description: values.description,
+        deadlineDays: values.deadlineDays 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/document-tracking/document/${documentId}`] });
+      toast({
+        title: "Sucesso",
+        description: "Responsável atribuído com sucesso",
+      });
+      onClose();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao atribuir responsável",
         variant: "destructive",
       });
     },
@@ -161,7 +189,11 @@ export default function DocumentForwardModal({
   });
 
   const onSubmit = (values: ForwardFormValues) => {
-    if (values.action === "FINALIZAR") {
+    if (values.action === "ATRIBUIR") {
+      assignEmployeeMutation.mutate(values);
+    } else if (values.action === "ENCAMINHAR") {
+      forwardToAreaMutation.mutate(values);
+    } else if (values.action === "FINALIZAR") {
       // Lógica para finalizar o documento
       toast({
         title: "Finalizar",
@@ -169,21 +201,15 @@ export default function DocumentForwardModal({
       });
       return;
     }
-
-    if (forwardToEmployee && values.toEmployeeId) {
-      forwardToEmployeeMutation.mutate(values);
-    } else {
-      forwardToAreaMutation.mutate(values);
-    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Encaminhar Documento</DialogTitle>
+          <DialogTitle>Gerenciar Documento</DialogTitle>
           <DialogDescription>
-            Escolha o destino para encaminhar o documento. Você pode encaminhar para uma área ou para um funcionário específico.
+            Escolha uma ação para o documento: atribuir responsável, encaminhar para outra área ou finalizar.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -204,7 +230,8 @@ export default function DocumentForwardModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="ENCAMINHAR">Encaminhar</SelectItem>
+                      <SelectItem value="ATRIBUIR">Atribuir Responsável</SelectItem>
+                      <SelectItem value="ENCAMINHAR">Encaminhar para Área</SelectItem>
                       <SelectItem value="FINALIZAR">Finalizar</SelectItem>
                     </SelectContent>
                   </Select>
@@ -213,83 +240,68 @@ export default function DocumentForwardModal({
               )}
             />
             
-            {action === "ENCAMINHAR" && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="toAreaId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Área de Destino</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a área de destino" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {areas?.map((area) => (
-                            <SelectItem key={area.id} value={area.id.toString()}>
-                              {area.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="forward-to-employee"
-                    checked={forwardToEmployee}
-                    onChange={(e) => setForwardToEmployee(e.target.checked)}
-                    className="rounded border-gray-300"
-                  />
-                  <label htmlFor="forward-to-employee">
-                    Encaminhar para um funcionário específico
-                  </label>
-                </div>
-
-                {forwardToEmployee && toAreaId && (
-                  <FormField
-                    control={form.control}
-                    name="toEmployeeId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Funcionário</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          disabled={employeesLoading}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o funcionário" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {employees?.map((employee) => (
-                              <SelectItem key={employee.id} value={employee.id.toString()}>
-                                {employee.firstName} {employee.lastName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            {action === "ATRIBUIR" && (
+              <FormField
+                control={form.control}
+                name="toEmployeeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Funcionário Responsável</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={employeesLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o funcionário responsável" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {employees?.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id.toString()}>
+                            {employee.firstName} {employee.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </>
+              />
             )}
 
             {action === "ENCAMINHAR" && (
+              <FormField
+                control={form.control}
+                name="toAreaId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Área de Destino</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a área de destino" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {areas?.map((area) => (
+                          <SelectItem key={area.id} value={area.id.toString()}>
+                            {area.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {(action === "ENCAMINHAR" || action === "ATRIBUIR") && (
               <FormField
                 control={form.control}
                 name="deadlineDays"
@@ -341,10 +353,11 @@ export default function DocumentForwardModal({
                 type="submit"
                 disabled={
                   forwardToAreaMutation.isPending || 
-                  forwardToEmployeeMutation.isPending
+                  forwardToEmployeeMutation.isPending ||
+                  assignEmployeeMutation.isPending
                 }
               >
-                {forwardToAreaMutation.isPending || forwardToEmployeeMutation.isPending 
+                {forwardToAreaMutation.isPending || forwardToEmployeeMutation.isPending || assignEmployeeMutation.isPending
                   ? "Processando..." 
                   : "Confirmar"}
               </Button>

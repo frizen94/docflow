@@ -222,25 +222,104 @@ Todo documento criado recebe automaticamente:
 - Data limite é armazenada como timestamp para facilitar consultas
 - Cálculo considera apenas dias úteis (segunda a sexta-feira)
 
-### 4.3. Upload e Gestão de Arquivos
+### 4.3. Sistema de Anexos e Gestão de Arquivos
 
-#### 4.3.1. Tipos de Arquivo Aceitos
-- **PDF**: Documentos finalizados
-- **DOC/DOCX**: Documentos Microsoft Word
-- **JPG/JPEG**: Imagens escaneadas
-- **PNG**: Imagens com transparência
+#### 4.3.1. Estrutura de Armazenamento por Processo
+O sistema implementa uma estrutura de pastas organizadas por número de processo, similar ao sistema PJe (Processo Judicial Eletrônico):
 
-#### 4.3.2. Limitações
-- Tamanho máximo por arquivo: 10MB
-- Apenas um arquivo por documento
-- Nome do arquivo é sanitizado automaticamente
-- Arquivos são renomeados com timestamp único para evitar conflitos
+**Estrutura de Diretórios:**
+```
+uploads/
+├── PROC-2025-08-14-0001/
+│   ├── documento_principal.pdf
+│   ├── anexo_01_contrato.pdf
+│   ├── anexo_02_planilha.xlsx
+│   └── resposta_area_juridica.pdf
+├── PROC-2025-08-14-0002/
+│   ├── documento_inicial.pdf
+│   └── complementacao_informacoes.docx
+```
 
-#### 4.3.3. Armazenamento
-- Arquivos são salvos no sistema de arquivos do servidor
-- Diretório: /uploads/
-- Referência do caminho é armazenada no banco de dados
-- Acesso aos arquivos requer autenticação válida
+#### 4.3.2. Tabela de Anexos do Documento
+Uma nova tabela `document_attachments` gerencia múltiplos arquivos por documento:
+
+**Campos da Tabela:**
+- `id`: Identificador único do anexo
+- `documentId`: Referência ao documento principal
+- `fileName`: Nome do arquivo no sistema de arquivos
+- `originalName`: Nome original do arquivo enviado pelo usuário
+- `filePath`: Caminho completo do arquivo
+- `fileSize`: Tamanho do arquivo em bytes
+- `mimeType`: Tipo MIME do arquivo
+- `category`: Categoria do anexo (Principal, Anexo, Resposta, Complementação)
+- `description`: Descrição opcional do anexo
+- `uploadedBy`: Usuário que fez o upload
+- `uploadedAt`: Data e hora do upload
+- `version`: Versão do arquivo (para controle de versionamento)
+
+#### 4.3.3. Categorias de Anexos
+- **Principal**: Documento principal do processo
+- **Anexo**: Documentos complementares obrigatórios
+- **Resposta**: Documentos enviados como resposta a solicitações
+- **Complementação**: Informações adicionais solicitadas
+- **Parecer**: Análises técnicas ou jurídicas
+- **Despacho**: Decisões ou encaminhamentos
+- **Comprovante**: Documentos probatórios
+
+#### 4.3.4. Tipos de Arquivo Aceitos
+- **PDF**: Documentos finalizados e oficiais
+- **DOC/DOCX**: Documentos Microsoft Word editáveis
+- **XLS/XLSX**: Planilhas e dados tabulares
+- **JPG/JPEG/PNG**: Imagens e documentos escaneados
+- **TXT**: Documentos de texto simples
+
+#### 4.3.5. Limitações por Processo
+- **Tamanho máximo por arquivo**: 25MB
+- **Tamanho máximo por processo**: 500MB
+- **Número máximo de arquivos por processo**: 50
+- **Tipos permitidos**: Conforme lista acima
+- **Nome de arquivo**: Máximo 255 caracteres, sanitizado automaticamente
+
+#### 4.3.6. Regras de Upload
+- **Pasta automática**: Sistema cria pasta automaticamente ao adicionar primeiro arquivo
+- **Numeração sequencial**: Anexos são numerados automaticamente (anexo_01, anexo_02, etc.)
+- **Verificação de vírus**: Recomendado scan antivírus antes do armazenamento
+- **Backup automático**: Arquivos são incluídos no backup diário do sistema
+
+#### 4.3.7. Controle de Versões
+- **Substituição de arquivo**: Permite atualizar arquivo mantendo histórico da versão anterior
+- **Histórico de versões**: Registra data, hora e usuário de cada alteração
+- **Restauração**: Possibilidade de restaurar versão anterior
+- **Numeração de versão**: v1.0, v1.1, v2.0, etc.
+
+### 4.3.9. Rotas de API para Anexos
+**Gestão de Arquivos por Processo:**
+- `POST /api/documents/:id/attachments` - Upload de novo anexo
+- `GET /api/documents/:id/attachments` - Listar todos os anexos do processo
+- `GET /api/documents/:id/attachments/:attachmentId` - Obter informações de anexo específico
+- `GET /api/documents/:id/attachments/:attachmentId/download` - Download de arquivo específico
+- `PUT /api/documents/:id/attachments/:attachmentId` - Atualizar informações do anexo
+- `DELETE /api/documents/:id/attachments/:attachmentId` - Remover anexo
+- `GET /api/documents/:id/attachments/download-all` - Download de todos os anexos em ZIP
+
+**Controle de Versões:**
+- `POST /api/documents/:id/attachments/:attachmentId/versions` - Upload de nova versão
+- `GET /api/documents/:id/attachments/:attachmentId/versions` - Listar versões do arquivo
+- `GET /api/documents/:id/attachments/:attachmentId/versions/:versionId` - Download de versão específica
+
+#### 4.3.10. Permissões de Anexos
+**Regras de Acesso:**
+- **Visualização**: Usuários da área atual podem ver todos os anexos
+- **Upload**: Usuários da área atual podem adicionar anexos
+- **Modificação**: Apenas quem fez upload ou administrador pode modificar
+- **Exclusão**: Apenas administrador pode excluir anexos
+- **Download**: Usuários com acesso ao documento podem baixar anexos
+
+**Auditoria de Anexos:**
+- Todo upload é registrado com usuário, data e IP
+- Modificações são logadas com detalhes das alterações
+- Downloads são registrados para fins de auditoria
+- Exclusões requerem justificativa obrigatória
 
 ### 4.4. Controle de Status
 

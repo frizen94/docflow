@@ -108,7 +108,6 @@ CREATE TABLE documents (
     status VARCHAR(50) NOT NULL DEFAULT 'Pending',
     subject TEXT NOT NULL,
     folios INTEGER NOT NULL DEFAULT 1,
-    file_path TEXT,
     priority VARCHAR(50) NOT NULL DEFAULT 'Normal' CHECK (priority IN ('Normal', 'Com Contagem de Prazo', 'Urgente')),
     deadline_days INTEGER,
     deadline TIMESTAMP WITH TIME ZONE,
@@ -129,6 +128,35 @@ CREATE TABLE documents (
   - Com Contagem de Prazo: 5 days default
   - Urgente: 1 day default
 - Deadlines calculated excluding weekends
+- File attachments managed through document_attachments table
+
+### document_attachments
+Multi-file attachment system with process-based organization.
+
+```sql
+CREATE TABLE document_attachments (
+    id SERIAL PRIMARY KEY,
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    file_name VARCHAR(255) NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    mime_type VARCHAR(255) NOT NULL,
+    category VARCHAR(50) NOT NULL DEFAULT 'Anexo' CHECK (category IN ('Principal', 'Anexo', 'Resposta', 'Petição', 'Despacho', 'Decisão', 'Complemento')),
+    description TEXT,
+    version VARCHAR(20) NOT NULL DEFAULT '1.0',
+    uploaded_by INTEGER NOT NULL REFERENCES users(id),
+    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+**Business Rules:**
+- Each document can have multiple attachments
+- Files organized in process-specific folders (uploads/PROC-YYYY-MM-DD-XXXX/)
+- Categories follow legal document standards
+- Version control for file updates
+- Complete file metadata tracking
+- Cascade deletion when document is removed
 
 ### document_tracking
 Audit trail for all document movements and status changes.
@@ -206,6 +234,8 @@ CREATE INDEX idx_documents_priority ON documents(priority);
 CREATE INDEX idx_documents_deadline ON documents(deadline);
 CREATE INDEX idx_document_tracking_document_id ON document_tracking(document_id);
 CREATE INDEX idx_document_tracking_created_at ON document_tracking(created_at);
+CREATE INDEX idx_document_attachments_document_id ON document_attachments(document_id);
+CREATE INDEX idx_document_attachments_category ON document_attachments(category);
 CREATE INDEX idx_employees_area_id ON employees(area_id);
 CREATE INDEX idx_users_area_id ON users(area_id);
 CREATE INDEX idx_users_employee_id ON users(employee_id);

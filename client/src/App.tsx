@@ -11,6 +11,7 @@ import AuthPage from "./pages/auth-page";
 import Dashboard from "./pages/dashboard";
 import Documents from "./pages/documents";
 import DocumentDetails from "./pages/document-details";
+import ProcessView from "./pages/process-view";
 // DocumentNew foi substituído pelo modal
 import Areas from "./pages/areas";
 import DocumentTypes from "./pages/document-types";
@@ -44,6 +45,12 @@ function Router() {
           <Layout>
             <DocumentDetails id={Number(params.id)} />
           </Layout>
+        )}
+      </ProtectedRoute>
+      
+      <ProtectedRoute path="/process/:id">
+        {(params) => (
+          <ProcessView />
         )}
       </ProtectedRoute>
       

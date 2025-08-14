@@ -16,7 +16,8 @@ import {
   insertDocumentTypeSchema, 
   insertEmployeeSchema, 
   insertDocumentSchema, 
-  insertDocumentTrackingSchema 
+  insertDocumentTrackingSchema,
+  insertDocumentAttachmentSchema
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { hashPassword, verifyPassword, isAdmin, isAuthenticated, hasAdminUser, createAdminUser } from "./auth";
@@ -319,13 +320,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Employee Routes
   app.get("/api/employees", isAuthenticated, async (req, res) => {
     try {
       const employees = await storage.listEmployees();
       res.json(employees);
     } catch (error) {
       res.status(500).json({ error: "Failed to retrieve employees" });
+    }
+  });
+
+  app.get("/api/employees/area/:areaId", isAuthenticated, async (req, res) => {
+    try {
+      const areaId = Number(req.params.areaId);
+      if (isNaN(areaId)) {
+        return res.status(400).json({ error: "Invalid area ID" });
+      }
+      const employees = await storage.getEmployeesByArea(areaId);
+      res.json(employees);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to retrieve employees for area" });
     }
   });
 
@@ -482,17 +495,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/documents", isAuthenticated, async (req, res) => {
     try {
       console.log("Received document data:", req.body);
+      console.log("deadlineDays value:", req.body.deadlineDays, "type:", typeof req.body.deadlineDays);
       
       const documentData = {
         ...req.body,
         folios: parseInt(req.body.folios) || 1,
-        deadlineDays: req.body.deadlineDays ? parseInt(req.body.deadlineDays) : null,
-        filePath: req.body.filePath || null,
+        deadlineDays: req.body.deadlineDays && !isNaN(Number(req.body.deadlineDays)) ? Number(req.body.deadlineDays) : null,
         documentTypeId: Number(req.body.documentTypeId),
         originAreaId: Number(req.body.originAreaId),
         currentAreaId: req.body.currentAreaId ? Number(req.body.currentAreaId) : Number(req.body.originAreaId),
         currentEmployeeId: req.body.currentEmployeeId ? Number(req.body.currentEmployeeId) : null,
       };
+
+      console.log("Processed deadlineDays:", documentData.deadlineDays);
 
       const document = await documentService.createDocument(documentData, (req.user as any).id);
       console.log("Document created successfully with business service:", document);
@@ -511,13 +526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Updating document data:", req.body);
       const id = Number(req.params.id);
       
-      // Ajustar valores null para string vazia em campos opcionais de texto
       const payload = { ...req.body };
-      ['filePath'].forEach(field => {
-        if (payload[field] === null || payload[field] === undefined) {
-          payload[field] = '';
-        }
-      });
       
       // Converter IDs para números
       ['documentTypeId', 'originAreaId', 'currentAreaId', 'currentEmployeeId'].forEach(field => {
@@ -652,6 +661,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Rota para atribuir responsável (sem mudar área)
+  app.post("/api/documents/:id/assign-employee", isAuthenticated, validateDocumentPermission, async (req, res) => {
+    try {
+      const documentId = Number(req.params.id);
+      const { toEmployeeId, description, deadlineDays } = req.body;
+      const userId = (req.user as any).id;
+      
+      console.log("assign-employee called with:", { documentId, toEmployeeId, description, deadlineDays });
+      
+      if (!toEmployeeId) {
+        return res.status(400).json({ error: "Funcionário responsável é obrigatório" });
+      }
+      
+      // Buscar o documento atual para manter a mesma área
+      const document = await storage.getDocument(documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+      
+      // Atribuir funcionário mantendo a mesma área
+      const tracking = await documentService.moveDocument(
+        documentId,
+        document.currentAreaId, // Mantém a área atual
+        Number(toEmployeeId),
+        description || "Atribuição de responsável",
+        deadlineDays ? Number(deadlineDays) : null,
+        userId
+      );
+      
+      res.status(201).json(tracking);
+    } catch (error) {
+      console.error("Error assigning employee:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Erro ao atribuir responsável" 
+      });
+    }
+  });
   
   app.post("/api/documents/:id/forward-to-employee", isAuthenticated, validateDocumentPermission, async (req, res) => {
     try {
@@ -746,6 +793,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Document Attachments Routes
+  app.get("/api/documents/:documentId/attachments", isAuthenticated, async (req, res) => {
+    try {
+      const documentId = Number(req.params.documentId);
+      const attachments = await storage.listDocumentAttachments(documentId);
+      res.json(attachments);
+    } catch (error) {
+      console.error("Error retrieving attachments:", error);
+      res.status(500).json({ error: "Failed to retrieve attachments" });
+    }
+  });
+
+  app.get("/api/documents/:documentId/attachments/category/:category", isAuthenticated, async (req, res) => {
+    try {
+      const documentId = Number(req.params.documentId);
+      const category = req.params.category;
+      const attachments = await storage.getAttachmentsByCategory(documentId, category);
+      res.json(attachments);
+    } catch (error) {
+      console.error("Error retrieving attachments by category:", error);
+      res.status(500).json({ error: "Failed to retrieve attachments by category" });
+    }
+  });
+
+  app.get("/api/attachments/:id", isAuthenticated, async (req, res) => {
+    try {
+      const attachment = await storage.getDocumentAttachment(Number(req.params.id));
+      if (!attachment) {
+        return res.status(404).json({ error: "Attachment not found" });
+      }
+      res.json(attachment);
+    } catch (error) {
+      console.error("Error retrieving attachment:", error);
+      res.status(500).json({ error: "Failed to retrieve attachment" });
+    }
+  });
+
+  app.delete("/api/attachments/:id", isAuthenticated, async (req, res) => {
+    try {
+      const attachmentId = Number(req.params.id);
+      const attachment = await storage.getDocumentAttachment(attachmentId);
+      
+      if (!attachment) {
+        return res.status(404).json({ error: "Attachment not found" });
+      }
+
+      // Verificar se o usuário tem permissão para deletar o anexo
+      const document = await storage.getDocument(attachment.documentId);
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      const user = req.user as any;
+      const isOwner = attachment.uploadedBy === user.id;
+      const isDocumentOwner = document.createdBy === user.id;
+      const hasAreaAccess = user.areaId === document.currentAreaId;
+      
+      if (user.role !== 'Administrator' && !isOwner && !isDocumentOwner && !hasAreaAccess) {
+        return res.status(403).json({ error: "Não autorizado a deletar este anexo" });
+      }
+
+      // Deletar arquivo físico
+      if (fs.existsSync(attachment.filePath)) {
+        fs.unlinkSync(attachment.filePath);
+      }
+
+      // Deletar registro do banco
+      const deleted = await storage.deleteDocumentAttachment(attachmentId);
+      
+      if (deleted) {
+        res.json({ success: true, message: "Anexo deletado com sucesso" });
+      } else {
+        res.status(500).json({ error: "Failed to delete attachment from database" });
+      }
+    } catch (error) {
+      console.error("Error deleting attachment:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to delete attachment" 
+      });
+    }
+  });
+
+  // Upload attachment to document
+  app.post("/api/documents/:documentId/attachments", isAuthenticated, async (req, res) => {
+    uploadAttachment.single('file')(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ 
+          error: err.message || 'Erro ao fazer upload do arquivo' 
+        });
+      }
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+      }
+
+      try {
+        const documentId = Number(req.params.documentId);
+        const { category, description, version } = req.body;
+        const userId = (req.user as any).id;
+
+        // Get document to create process folder
+        const document = await storage.getDocument(documentId);
+        if (!document) {
+          // Clean up uploaded file
+          fs.unlinkSync(req.file.path);
+          return res.status(404).json({ error: "Document not found" });
+        }
+
+        // Create process folder
+        const processFolder = path.join(uploadDir, document.documentNumber);
+        if (!fs.existsSync(processFolder)) {
+          fs.mkdirSync(processFolder, { recursive: true });
+        }
+
+        // Move file to process folder
+        const originalPath = req.file.path;
+        const newPath = path.join(processFolder, req.file.filename);
+        fs.renameSync(originalPath, newPath);
+
+        // Create attachment record
+        const attachmentData = {
+          documentId,
+          fileName: req.file.filename,
+          originalName: req.file.originalname,
+          filePath: newPath,
+          fileSize: req.file.size,
+          mimeType: req.file.mimetype,
+          category: category || 'Anexo',
+          description: description || null,
+          version: version || '1.0',
+          uploadedBy: userId
+        };
+
+        const attachment = await storage.createDocumentAttachment(attachmentData);
+        
+        res.status(201).json({
+          success: true,
+          attachment,
+          message: "Anexo enviado com sucesso"
+        });
+      } catch (error) {
+        // Clean up uploaded file on error
+        if (req.file && fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        
+        console.error("Error uploading attachment:", error);
+        res.status(500).json({ 
+          error: error instanceof Error ? error.message : "Failed to upload attachment" 
+        });
+      }
+    });
+  });
+
+  // Download attachment
+  app.get("/api/attachments/:id/download", isAuthenticated, async (req, res) => {
+    try {
+      const attachment = await storage.getDocumentAttachment(Number(req.params.id));
+      if (!attachment) {
+        return res.status(404).json({ error: "Attachment not found" });
+      }
+
+      // Check if file exists
+      if (!fs.existsSync(attachment.filePath)) {
+        return res.status(404).json({ error: "File not found on disk" });
+      }
+
+      // Set appropriate headers
+      res.setHeader('Content-Disposition', `attachment; filename="${attachment.originalName}"`);
+      res.setHeader('Content-Type', attachment.mimeType);
+
+      // Stream file
+      const fileStream = fs.createReadStream(attachment.filePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error("Error downloading attachment:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to download attachment" 
+      });
+    }
+  });
+
   // Set up file uploads
   // Create uploads directory if it doesn't exist
   const uploadDir = path.join(process.cwd(), 'uploads');
@@ -761,6 +990,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     filename: function(_req, file, cb) {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+
+  // Configure multer for process-organized attachments
+  const attachmentStorage = multer.diskStorage({
+    destination: function(req, _file, cb) {
+      // Get document number from request to create process folder
+      const documentId = req.params.documentId || req.body.documentId;
+      if (!documentId) {
+        return cb(new Error('Document ID is required'), '');
+      }
+      
+      // Create process folder if it doesn't exist
+      // We'll get the document number from the database
+      cb(null, uploadDir); // Temporary, will be updated in the route handler
+    },
+    filename: function(_req, file, cb) {
+      const timestamp = Date.now();
+      const cleanName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+      cb(null, `${timestamp}-${cleanName}`);
     }
   });
 
@@ -788,9 +1037,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // File upload endpoint
+  const uploadAttachment = multer({
+    storage: attachmentStorage,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB file size limit
+    },
+    fileFilter: (_req, file, cb) => {
+      // Accept only specific file types
+      const allowedTypes = [
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'image/jpeg',
+        'image/png',
+        'text/plain'
+      ];
+      
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        // @ts-ignore - Multer types don't match correct callback signature
+        cb(new Error('Tipo de arquivo inválido. Apenas arquivos PDF, DOC, DOCX, XLS, XLSX, JPG, PNG e TXT são permitidos.'), false);
+      }
+    }
+  });
+
+  // File upload endpoint - Modified to support document folder structure
   app.post('/api/upload', isAuthenticated, (req, res) => {
-    upload.single('file')(req, res, (err) => {
+    upload.single('file')(req, res, async (err) => {
       if (err) {
         return res.status(400).json({ 
           error: err.message || 'Erro ao fazer upload do arquivo' 
@@ -801,12 +1076,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Nenhum arquivo enviado' });
       }
 
-      // Return file path for storage in the document record
-      res.json({ 
-        success: true, 
-        filePath: req.file.path,
-        fileName: req.file.originalname
-      });
+      try {
+        // Get documentId from request body or query
+        const documentId = req.body.documentId || req.query.documentId;
+        
+        if (documentId) {
+          // If documentId is provided, use folder structure
+          const document = await storage.getDocument(Number(documentId));
+          if (document) {
+            // Create process folder
+            const processFolder = path.join(uploadDir, document.documentNumber);
+            if (!fs.existsSync(processFolder)) {
+              fs.mkdirSync(processFolder, { recursive: true });
+            }
+
+            // Move file to process folder
+            const originalPath = req.file.path;
+            const newPath = path.join(processFolder, req.file.filename);
+            fs.renameSync(originalPath, newPath);
+
+            // Return updated file path
+            return res.json({ 
+              success: true, 
+              filePath: newPath,
+              fileName: req.file.originalname
+            });
+          }
+        }
+        
+        // Fallback to original behavior if no documentId
+        res.json({ 
+          success: true, 
+          filePath: req.file.path,
+          fileName: req.file.originalname
+        });
+      } catch (error) {
+        console.error("Error in upload:", error);
+        // Cleanup uploaded file on error
+        if (req.file && fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        res.status(500).json({ 
+          error: error instanceof Error ? error.message : "Erro interno do servidor" 
+        });
+      }
     });
   });
 
